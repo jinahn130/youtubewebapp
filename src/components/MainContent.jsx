@@ -36,9 +36,19 @@ function MainContent({ view, setView, setSelectedVideoId, setChannel, selectedCh
       content = <div>Welcome to the Home Page</div>;
   }
 
-  // ✅ Wrap with scrollable area
+  // ✅ Wrap everything in a scrollable, padded div
   return (
-    <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', minWidth: 0 }}>
+    <div
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        minWidth: 0,
+          wordBreak: 'break-word',
+          overflowWrap: 'anywhere',
+        padding: '1rem', // ✅ spacing
+      }}
+    >
       {content}
     </div>
   );

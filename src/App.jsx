@@ -4,10 +4,17 @@ import MainContent from './components/MainContent';
 import VideoSummary from './components/VideoSummary';
 
 function App() {
-  const [view, setView] = useState('home');
+
+  const [view, setView] = useState(() => {
+    return localStorage.getItem('activeView') || 'home';
+  });
   const [selectedVideoId, setSelectedVideoId] = useState(null);
   const [channel, setChannel] = useState(null);
 
+  const handleViewChange = (newView) => {
+    localStorage.setItem('activeView', newView);
+    setView(newView);
+  };
   const containerRef = useRef(null);
   const resizerRef = useRef(null);
   const isResizing = useRef(false);
@@ -66,82 +73,101 @@ function App() {
   }
 
   return (
-    <div className="container-fluid" ref={containerRef}>
-      <div className="d-flex" style={{ minHeight: '100vh' }}>
-        {/* Sidebar */}
-        <nav
-          className="p-3 text-white sidebar bg-dark d-flex flex-column"
-          style={{
-            minHeight: '100vh',
-            width: sidebarCollapsed ? '60px' : '180px',
-            transition: 'width 0.3s ease',
-            overflow: 'hidden',
-          }}
-        >
-          <Sidebar
-            onSelectView={setView}
-            collapsed={sidebarCollapsed}
-            toggleCollapse={toggleSidebar}
-          />
-        </nav>
+<div
+  className="container-fluid"
+  ref={containerRef}
+  style={{
+    height: '100vh',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'row',
+  }}
+>
+  {/* Sidebar */}
+  <nav
+    className="d-flex flex-column"
+    style={{
+      width: sidebarCollapsed ? '60px' : '160px',
+      transition: 'width 0.3s ease',
+      overflow: 'hidden',
+      flexShrink: 0,
+      height: '100vh',
+      borderRight: '1px solid #dee2e6',
+      backgroundColor: '#f5f1e8',
+    }}
+  >
+    <Sidebar
+      onSelectView={handleViewChange}
+      currentView={view}          // ✅ Pass active view
+      collapsed={sidebarCollapsed}
+      toggleCollapse={toggleSidebar}
+    />
+  </nav>
 
-        {/* Main Content */}
-        <main
-          className="p-3 flex-grow-1"
-          style={{ minWidth: 0, overflow: 'auto' }}
-        >
-          <MainContent
-            view={view}
-            setView={setView}
-            setSelectedVideoId={setSelectedVideoId}
-            setChannel={(channelId) => {
-              setChannel(channelId);
-              setView('channelVideos');
-            }}
-            selectedChannel={channel}
-            channelScrollRef={channelScrollRef}
-          />
-        </main>
+  {/* Main */}
+  <main
+    className="flex-grow-1 d-flex flex-column"
+    style={{
+      minWidth: 0,
+      flexShrink: 1,
+      overflow: 'hidden', // ← this is critical
+    }}
+  >
+    <MainContent
+      view={view}
+      setView={handleViewChange}
+      setSelectedVideoId={setSelectedVideoId}
+      setChannel={(channelId) => {
+        setChannel(channelId);
+        setView('channelVideos');
+      }}
+      selectedChannel={channel}
+      channelScrollRef={channelScrollRef}
+    />
+  </main>
 
-        {/* Resizer */}
-        <div
-          ref={resizerRef}
-          onMouseDown={startResizing}
-          style={{
-            width: '6px',
-            cursor: 'col-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'transparent',
-            userSelect: 'none',
-          }}
-        >
-          <div
-            style={{
-              width: '2px',
-              height: '90%',
-              borderRadius: '1px',
-              backgroundColor: isDragging ? '#666' : '#bbb',
-              opacity: isDragging ? 1 : 0.3,
-              transition: 'opacity 0.2s ease, background-color 0.2s ease',
-            }}
-          />
-        </div>
+  {/* Resizer */}
+  <div
+    ref={resizerRef}
+    onMouseDown={startResizing}
+    style={{
+      width: '6px',
+      cursor: 'col-resize',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'transparent',
+      userSelect: 'none',
+    }}
+  >
+    <div
+      style={{
+        width: '2px',
+        height: '90%',
+        borderRadius: '1px',
+        backgroundColor: isDragging ? '#666' : '#bbb',
+        opacity: isDragging ? 1 : 0.3,
+        transition: 'opacity 0.2s ease, background-color 0.2s ease',
+      }}
+    />
+  </div>
 
-        {/* Video Summary */}
-        <aside
-          className="p-4 bg-light"
-          style={{
-            width: `${videoSummaryWidth}px`,
-            minWidth: '300px',
-            maxWidth: '1000px',
-          }}
-        >
-          <VideoSummary videoId={selectedVideoId} />
-        </aside>
-      </div>
-    </div>
+  {/* Video Summary */}
+  <aside
+    className="p-4 bg-light"
+    style={{
+      width: `${videoSummaryWidth}px`,
+      minWidth: 200,
+      maxWidth: 1300,
+      flexShrink: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+    }}
+  >
+    <VideoSummary videoId={selectedVideoId} />
+  </aside>
+</div>
   );
 }
 

@@ -33,7 +33,14 @@ function VideoSummary({ videoId }) {
   return (
     <div
       ref={containerRef}
-      style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden' }}
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        minWidth: 0,
+      }}
     >
       <h5>Video Summary</h5>
       <div>{summary}</div>

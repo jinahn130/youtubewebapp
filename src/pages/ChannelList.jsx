@@ -1,60 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 
 const channels = [
-   {
-      "channel_tag":"@MeetKevin",
-      "channel_id":"UCUvvj5lwue7PspotMDjk5UA"
-   },
-   {
-      "channel_tag":"@FinancialEducation",
-      "channel_id":"UCnMn36GT_H0X-w5_ckLtlgQ"
-   },
-   {
-      "channel_tag":"@StockMoe",
-      "channel_id":"UCoMzWLaPjDJBbipihD694pQ"
-   },
-   {
-      "channel_tag":"@AndreiJikh",
-      "channel_id":"UCGy7SkBjcIAgTiwkXEtPnYg"
-   },
-   {
-      "channel_tag":"@BenFelixCSI",
-      "channel_id":"UCDXTQ8nWmx_EhZ2v-kp7QxA"
-   },
-   {
-      "channel_tag":"@ThePlainBagel",
-      "channel_id":"UCFCEuCsyWP0YkP3CZ3Mr01Q"
-   },
-   {
-      "channel_tag":"@GrahamStephan",
-      "channel_id":"UCV6KDgJskWaEckne5aPA0aQ"
-   },
-   {
-      "channel_tag":"@MarkTilbury",
-      "channel_id":"UCxgAuX3XZROujMmGphN_scA"
-   },
-   {
-      "channel_tag":"@Value-Investing",
-      "channel_id":"UCrTTBSUr0zhPU56UQljag5A"
-   },
-   {
-      "channel_tag":"@JosephCarlsonShow",
-      "channel_id":"UCbta0n8i6Rljh0obO7HzG9A"
-   },
-   {
-      "channel_tag":"@WhiteBoardFinance",
-      "channel_id":"UCL_v4tC26PvOFytV1_eEVSg"
-   },
-   {
-      "channel_tag":"@TheInvestorChannel",
-      "channel_id":"UC7r4-nZ4icT8SIcnisXFSHQ"
-   }
+  { channel_tag: '@MeetKevin', channel_id: 'UCUvvj5lwue7PspotMDjk5UA' },
+  { channel_tag: '@FinancialEducation', channel_id: 'UCnMn36GT_H0X-w5_ckLtlgQ' },
+  { channel_tag: '@StockMoe', channel_id: 'UCoMzWLaPjDJBbipihD694pQ' },
+  { channel_tag: '@AndreiJikh', channel_id: 'UCGy7SkBjcIAgTiwkXEtPnYg' },
+  { channel_tag: '@BenFelixCSI', channel_id: 'UCDXTQ8nWmx_EhZ2v-kp7QxA' },
+  { channel_tag: '@ThePlainBagel', channel_id: 'UCFCEuCsyWP0YkP3CZ3Mr01Q' },
+  { channel_tag: '@GrahamStephan', channel_id: 'UCV6KDgJskWaEckne5aPA0aQ' },
+  { channel_tag: '@MarkTilbury', channel_id: 'UCxgAuX3XZROujMmGphN_scA' },
+  { channel_tag: '@Value-Investing', channel_id: 'UCrTTBSUr0zhPU56UQljag5A' },
+  { channel_tag: '@JosephCarlsonShow', channel_id: 'UCbta0n8i6Rljh0obO7HzG9A' },
+  { channel_tag: '@WhiteBoardFinance', channel_id: 'UCL_v4tC26PvOFytV1_eEVSg' },
+  { channel_tag: '@TheInvestorChannel', channel_id: 'UC7r4-nZ4icT8SIcnisXFSHQ' },
 ];
 
 function ChannelList({ onSelectChannel, selectedChannelId, savedScrollTopRef }) {
   const listRef = useRef(null);
 
-  // Restore scroll position when component mounts
+  // Restore scroll position
   useEffect(() => {
     if (listRef.current && savedScrollTopRef?.current != null) {
       setTimeout(() => {
@@ -63,7 +27,6 @@ function ChannelList({ onSelectChannel, selectedChannelId, savedScrollTopRef }) 
     }
   }, []);
 
-  // Handle channel click and save scroll
   const handleSelect = (channelId) => {
     if (listRef.current) {
       savedScrollTopRef.current = listRef.current.scrollTop;
@@ -72,16 +35,20 @@ function ChannelList({ onSelectChannel, selectedChannelId, savedScrollTopRef }) 
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <div
         ref={listRef}
         style={{
           flex: 1,
           overflowY: 'auto',
-          overflowX: 'hidden',
-          paddingRight: '4px',
+          padding: '1rem',
           WebkitOverflowScrolling: 'touch',
-          cursor: 'grab',
         }}
       >
         {channels.map((ch) => (
@@ -98,14 +65,14 @@ function ChannelList({ onSelectChannel, selectedChannelId, savedScrollTopRef }) 
               e.currentTarget.style.transform = 'none';
             }}
             style={{
-              backgroundColor: selectedChannelId === ch.channel_id ? '#eef6ff' : 'transparent',
+              backgroundColor: selectedChannelId === ch.channel_id ? '#eef6ff' : 'white',
+              border: '1px solid #dee2e6',
               borderRadius: '6px',
               minHeight: '60px',
-              flexWrap: 'nowrap',
-              overflow: 'hidden',
-              minWidth: 0,
               cursor: 'pointer',
               transition: 'all 0.2s ease-in-out',
+              overflow: 'hidden',
+              minWidth: 0,
             }}
           >
             <img
@@ -117,15 +84,18 @@ function ChannelList({ onSelectChannel, selectedChannelId, savedScrollTopRef }) 
               style={{ objectFit: 'cover', flexShrink: 0 }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: 500, wordBreak: 'break-word' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>
                 {ch.channel_tag}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#6c757d', wordBreak: 'break-word' }}>
+              <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
                 &lt;TODO: fetch metadata&gt;
               </div>
             </div>
           </div>
         ))}
+        <div style={{ height: '2000px', background: '#f8f9fa' }}>
+          Scroll test filler
+        </div>
       </div>
     </div>
   );

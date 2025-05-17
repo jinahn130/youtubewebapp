@@ -39,24 +39,23 @@ function ExtractView({ onVideoClick }) {
   }, []);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div
-        ref={containerRef}
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          paddingRight: '4px',
-          minWidth: 0,
-          maxWidth: '100%',
-        }}
-      >
-        <h5 className="mb-3">📅 Daily Extract</h5>
-        <MarketInsights data={dailyExtract} onVideoClick={onVideoClick} />
+    <div
+      ref={containerRef}
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        padding: '1rem', // ✅ matches ChannelList spacing
+        minWidth: 0,
+        flexShrink: 1,
+        backgroundColor: '#f8f9fa', // optional: match background tone
+      }}
+    >
+      <h5 className="mb-3">📅 Daily Extract</h5>
+      <MarketInsights data={dailyExtract} onVideoClick={onVideoClick} />
 
-        <h5 className="mt-5 mb-3">🗓 Weekly Extract</h5>
-        <MarketInsights data={weeklyExtract} onVideoClick={onVideoClick} />
-      </div>
+      <h5 className="mt-5 mb-3">🗓 Weekly Extract</h5>
+      <MarketInsights data={weeklyExtract} onVideoClick={onVideoClick} />
     </div>
   );
 }
