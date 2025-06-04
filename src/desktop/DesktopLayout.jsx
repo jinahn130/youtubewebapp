@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import MainContent from './MainContent';
 import VideoSummary from '../components/VideoSummary';
 
@@ -20,28 +20,53 @@ function DesktopLayout({
   resizerRef,
   videoSummaryWidth,
   isDragging,
-  startResizing,
+  startResizing
 }) {
   return (
     <div
-      className="container-fluid"
       ref={containerRef}
-      style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'row' }}
+      style={{
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'row',
+        overflow: 'hidden',
+      }}
     >
-      <Sidebar
-        view={view}
-        setView={setView}
-        collapsed={sidebarCollapsed}
-        toggleCollapsed={toggleSidebar}
-      />
+      {/* Sidebar */}
+      <div
+        style={{
+          width: sidebarCollapsed ? '60px' : '160px',
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          borderRight: '1px solid #dee2e6',
+          backgroundColor: '#fff',
+        }}
+      >
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          toggleCollapsed={toggleSidebar}
+          activeView={view}
+          setView={setView}
+        />
+      </div>
 
       {/* Main Content */}
-      <main className="flex-grow-1 d-flex flex-column" style={{ minWidth: 0, flexShrink: 1, overflow: 'hidden' }}>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
         <MainContent
           view={view}
           setView={setView}
-          selectedVideoId={selectedVideoId}
           setSelectedVideoId={onVideoSelect}
+          selectedVideoId={selectedVideoId}
           setChannel={(channelId) => {
             setChannel((prev) => {
               if (prev !== channelId) {
@@ -58,27 +83,35 @@ function DesktopLayout({
           channelScrollRef={channelScrollRef}
           channelList={channelList}
           recentVideos={recentVideos}
-          containerRef={containerRef}
         />
-      </main>
+      </div>
 
-      {/* Vertical Resizer */}
+      {/* Resizer */}
       <div
         ref={resizerRef}
         onMouseDown={startResizing}
-        style={{ width: '4px', cursor: 'col-resize', backgroundColor: isDragging ? '#007bff' : '#dee2e6' }}
+        style={{
+          width: '6px',
+          cursor: 'col-resize',
+          backgroundColor: isDragging ? '#ccc' : '#f1f1f1',
+          flexShrink: 0,
+          zIndex: 10,
+        }}
       />
 
-      {/* Video Summary Panel */}
+      {/* Video Summary */}
       <aside
         style={{
           width: `${videoSummaryWidth}px`,
-          transition: isDragging ? 'none' : 'width 0.3s ease',
+          minWidth: '300px',
+          maxWidth: '1000px',
+          flexShrink: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          backgroundColor: '#fff',
           borderLeft: '1px solid #dee2e6',
-          backgroundColor: '#f9f9f9',
-          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
         }}
       >
         <VideoSummary

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
+import VideoSummary from './components/VideoSummary';
 
 function App() {
   const [view, setView] = useState(() => {
@@ -15,7 +16,12 @@ function App() {
   const [channelList, setChannelList] = useState([]);
   const [recentVideos, setRecentVideos] = useState([]);
 
+  const containerRef = useRef(null);
+  const resizerRef = useRef(null);
+  const isResizing = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const channelScrollRef = useRef(null);
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebarCollapsed') === 'true';
   });
@@ -24,19 +30,13 @@ function App() {
     return saved ? parseInt(saved, 10) : 400;
   });
 
-  const containerRef = useRef(null);
-  const resizerRef = useRef(null);
-  const isResizing = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const scrollMemoryRef = useRef({});
-
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const handleViewChange = (newView) => {
+    if (newView === 'channel') {
+      setChannel(null);
+    }
+    localStorage.setItem('activeView', newView);
+    setView(newView);
+  };
 
   useEffect(() => {
     async function fetchChannelList() {
@@ -66,7 +66,9 @@ function App() {
   const handleVideoSelect = async (videoId) => {
     setSelectedVideoId(videoId);
     try {
-      const res = await fetch(`https://digestjutsu.com/youtubeStockResearchReadS3SingleVideo?video_id=${videoId}`);
+      const res = await fetch(
+        `https://digestjutsu.com/youtubeStockResearchReadS3SingleVideo?video_id=${videoId}`
+      );
       const parsed = await res.json();
       setVideoSummaryData(parsed);
     } catch (err) {
@@ -75,12 +77,12 @@ function App() {
     }
   };
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(prev => {
+  function toggleSidebar() {
+    setSidebarCollapsed((prev) => {
       localStorage.setItem('sidebarCollapsed', !prev);
       return !prev;
     });
-  };
+  }
 
   function startResizing() {
     isResizing.current = true;
@@ -111,11 +113,13 @@ function App() {
     };
   }, []);
 
+  const isMobile = window.innerWidth < 768;
+
   if (isMobile) {
     return (
       <MobileLayout
         view={view}
-        setView={setView}
+        setView={handleViewChange}
         onVideoSelect={handleVideoSelect}
         selectedVideoId={selectedVideoId}
         videoSummaryData={videoSummaryData}
@@ -124,7 +128,6 @@ function App() {
         channelList={channelList}
         recentVideos={recentVideos}
         channelScrollRef={channelScrollRef}
-        scrollMemoryRef={scrollMemoryRef}
       />
     );
   }
@@ -132,7 +135,7 @@ function App() {
   return (
     <DesktopLayout
       view={view}
-      setView={setView}
+      setView={handleViewChange}
       onVideoSelect={handleVideoSelect}
       selectedVideoId={selectedVideoId}
       videoSummaryData={videoSummaryData}

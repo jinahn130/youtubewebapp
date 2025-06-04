@@ -8,7 +8,7 @@ function formatSubs(n) {
   return n.toString();
 }
 
-function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], selectedVideoId}) {
+function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], selectedVideoId }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState('title');
   const [sortBy, setSortBy] = useState('published_at');
@@ -30,10 +30,7 @@ function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], se
     return new Date(b.published_at) - new Date(a.published_at);
   });
 
-  const channelMap = Object.fromEntries(
-    (channelList || []).map((ch) => [ch.channel_tag, ch])
-  );
-
+  const channelMap = Object.fromEntries((channelList || []).map((ch) => [ch.channel_tag, ch]));
   const isMobile = window.innerWidth < 768;
 
   return (
@@ -73,9 +70,7 @@ function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], se
         return (
           <div
             key={video.video_id + video.published_at}
-            onClick={() => {
-              onVideoClick(video.video_id); 
-            }}
+            onClick={() => onVideoClick(video.video_id)}
             className="d-flex gap-3 align-items-start mb-2 rounded border shadow-sm"
             style={{
               borderRadius: '16px',

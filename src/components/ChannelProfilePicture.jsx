@@ -1,8 +1,8 @@
 import React from 'react';
 
-const ChannelProfilePicture = ({ channelId, size = 48, alt }) => (
+const ChannelProfilePicture = ({ url, size = 48, alt }) => (
   <img
-    src={`https://yt3.googleusercontent.com/ytc/${channelId}=s${size}-c-k-c0x00ffffff-no-rj`}
+    src={url}
     alt={alt || 'YouTube Channel'}
     width={size}
     height={size}
@@ -14,6 +14,5 @@ const ChannelProfilePicture = ({ channelId, size = 48, alt }) => (
     }}
   />
 );
-
 
 export default ChannelProfilePicture;

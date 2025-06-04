@@ -1,63 +1,68 @@
 import React from 'react';
+import { FaChevronLeft, FaChevronRight, FaHome, FaChartLine, FaList } from 'react-icons/fa';
 
 const navItems = [
-  { label: 'Home', icon: 'bi-house', view: 'home' },
-  { label: 'Recent', icon: 'bi-clock-history', view: 'recent' },
-  { label: 'Extract', icon: 'bi-scissors', view: 'extract' },
-  { label: 'Channel', icon: 'bi-person-circle', view: 'channel' },
+  { label: 'Recent', icon: <FaHome />, view: 'recent' },
+  { label: 'Extract', icon: <FaChartLine />, view: 'extract' },
+  { label: 'Channels', icon: <FaList />, view: 'channel' },
 ];
-function Sidebar({ onSelectView, currentView, collapsed, toggleCollapse }) {
+
+function Sidebar({ setView, currentView, collapsed, toggleCollapse }) {
   return (
     <div
-      className="d-flex flex-column h-100"
       style={{
+        height: '100%',
         width: '100%',
-        paddingTop: '0.5rem',
         backgroundColor: '#fff',
-        color: '#000',
-        fontSize: '0.9rem',
+        borderRight: '1px solid #dee2e6',
+        fontSize: '0.88rem',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* Collapse button */}
+      {/* Collapse toggle */}
       <div className="px-2 mb-2">
         <button
           className="btn btn-sm btn-outline-secondary w-100"
           onClick={toggleCollapse}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {collapsed ? (
-            <i className="bi bi-chevron-right" />
-          ) : (
-            <i className="bi bi-chevron-left" />
-          )}
+          {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
         </button>
       </div>
 
-      {/* Section title */}
+      {/* Navigation Title */}
       {!collapsed && (
-        <div className="px-3 text-muted text-uppercase fw-semibold mb-2" style={{ fontSize: '0.75rem' }}>
+        <div
+          className="px-3 text-muted text-uppercase fw-semibold mb-2"
+          style={{ fontSize: '0.72rem' }}
+        >
           Navigation
         </div>
       )}
 
-      {/* Navigation links */}
+      {/* Navigation Links */}
       <ul className="nav flex-column">
         {navItems.map((item) => (
           <li key={item.view} className="nav-item">
             <a
               href="#"
               className="nav-link d-flex align-items-center gap-2 px-3 py-2"
-              onClick={() => onSelectView(item.view)}
+              onClick={(e) => {
+                e.preventDefault();
+                setView(item.view);
+              }}
               title={collapsed ? item.label : ''}
               style={{
-                color: '#000',
-                backgroundColor: currentView === item.view ? '#f1f1f1' : 'transparent',
-                fontWeight: currentView === item.view ? '600' : 'normal',
+                color: currentView === item.view ? '#0d6efd' : '#333',
+                backgroundColor: currentView === item.view ? '#eef6ff' : 'transparent',
+                fontWeight: currentView === item.view ? 600 : 500,
+                borderLeft: currentView === item.view ? '4px solid #0d6efd' : '4px solid transparent',
                 borderRadius: '8px',
+                transition: 'background-color 0.2s ease',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                transition: 'background-color 0.2s',
               }}
               onMouseEnter={(e) => {
                 if (currentView !== item.view) {
@@ -70,12 +75,22 @@ function Sidebar({ onSelectView, currentView, collapsed, toggleCollapse }) {
                 }
               }}
             >
-              <i className={`bi ${item.icon}`} style={{ fontSize: '1rem' }} />
+              <span>{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </a>
           </li>
         ))}
       </ul>
+
+      {/* Footer */}
+      {!collapsed && (
+        <div
+          className="mt-auto px-3 py-2 text-muted"
+          style={{ fontSize: '0.72rem' }}
+        >
+          Built by Jutsu
+        </div>
+      )}
     </div>
   );
 }
