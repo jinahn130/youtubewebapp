@@ -1,45 +1,97 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import MainContent from './components/MainContent';
-import VideoSummary from './components/VideoSummary';
+import DesktopLayout from './desktop/DesktopLayout';
+import MobileLayout from './mobile/MobileLayout';
 
 function App() {
-
   const [view, setView] = useState(() => {
-    return localStorage.getItem('activeView') || 'home';
+    const stored = localStorage.getItem('activeView');
+    const validViews = ['recent', 'extract', 'channel', 'channelVideos'];
+    return validViews.includes(stored) ? stored : 'recent';
   });
+
   const [selectedVideoId, setSelectedVideoId] = useState(null);
+  const [videoSummaryData, setVideoSummaryData] = useState(null);
   const [channel, setChannel] = useState(null);
+  const [channelList, setChannelList] = useState([]);
+  const [recentVideos, setRecentVideos] = useState([]);
 
-  const handleViewChange = (newView) => {
-    localStorage.setItem('activeView', newView);
-    setView(newView);
-  };
-  const containerRef = useRef(null);
-  const resizerRef = useRef(null);
-  const isResizing = useRef(false);
   const channelScrollRef = useRef(null);
-
-  // ✅ Persistent Sidebar State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebarCollapsed') === 'true';
   });
-
-  // ✅ Persistent Video Summary Width
   const [videoSummaryWidth, setVideoSummaryWidth] = useState(() => {
     const saved = localStorage.getItem('videoSummaryWidth');
     return saved ? parseInt(saved, 10) : 400;
   });
 
-  // ✅ Drag indicator state
+  const containerRef = useRef(null);
+  const resizerRef = useRef(null);
+  const isResizing = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  const scrollMemoryRef = useRef({});
+
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    async function fetchChannelList() {
+      try {
+        const res = await fetch('https://digestjutsu.com/GetPostAllChannel?method=get');
+        const parsed = await res.json();
+        setChannelList(parsed);
+      } catch (err) {
+        console.error('Failed to fetch channel list:', err);
+      }
+    }
+
+    async function fetchRecentVideos() {
+      try {
+        const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
+        const parsed = await res.json();
+        setRecentVideos(parsed);
+      } catch (err) {
+        console.error('Failed to fetch recent videos:', err);
+      }
+    }
+
+    fetchChannelList();
+    fetchRecentVideos();
+  }, []);
+
+  const handleVideoSelect = async (videoId) => {
+    setSelectedVideoId(videoId);
+    try {
+      const res = await fetch(`https://digestjutsu.com/youtubeStockResearchReadS3SingleVideo?video_id=${videoId}`);
+      const parsed = await res.json();
+      setVideoSummaryData(parsed);
+    } catch (err) {
+      console.error('Failed to fetch video summary:', err);
+      setVideoSummaryData(null);
+    }
+  };
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(prev => {
+      localStorage.setItem('sidebarCollapsed', !prev);
+      return !prev;
+    });
+  };
+
+  function startResizing() {
+    isResizing.current = true;
+    setIsDragging(true);
+  }
 
   useEffect(() => {
     function handleMouseMove(e) {
       if (!isResizing.current) return;
-      const containerRight = containerRef.current.getBoundingClientRect().right;
+      const containerRight = containerRef.current?.getBoundingClientRect().right || window.innerWidth;
       const newWidth = containerRight - e.clientX;
-
       if (newWidth > 300 && newWidth < 1000) {
         setVideoSummaryWidth(newWidth);
         localStorage.setItem('videoSummaryWidth', newWidth);
@@ -53,121 +105,50 @@ function App() {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
-  function startResizing() {
-    isResizing.current = true;
-    setIsDragging(true);
-  }
-
-  function toggleSidebar() {
-    setSidebarCollapsed((prev) => {
-      localStorage.setItem('sidebarCollapsed', !prev);
-      return !prev;
-    });
+  if (isMobile) {
+    return (
+      <MobileLayout
+        view={view}
+        setView={setView}
+        onVideoSelect={handleVideoSelect}
+        selectedVideoId={selectedVideoId}
+        videoSummaryData={videoSummaryData}
+        channel={channel}
+        setChannel={setChannel}
+        channelList={channelList}
+        recentVideos={recentVideos}
+        channelScrollRef={channelScrollRef}
+        scrollMemoryRef={scrollMemoryRef}
+      />
+    );
   }
 
   return (
-<div
-  className="container-fluid"
-  ref={containerRef}
-  style={{
-    height: '100vh',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'row',
-  }}
->
-  {/* Sidebar */}
-  <nav
-    className="d-flex flex-column"
-    style={{
-      width: sidebarCollapsed ? '60px' : '160px',
-      transition: 'width 0.3s ease',
-      overflow: 'hidden',
-      flexShrink: 0,
-      height: '100vh',
-      borderRight: '1px solid #dee2e6',
-      backgroundColor: '#f5f1e8',
-    }}
-  >
-    <Sidebar
-      onSelectView={handleViewChange}
-      currentView={view}          // ✅ Pass active view
-      collapsed={sidebarCollapsed}
-      toggleCollapse={toggleSidebar}
-    />
-  </nav>
-
-  {/* Main */}
-  <main
-    className="flex-grow-1 d-flex flex-column"
-    style={{
-      minWidth: 0,
-      flexShrink: 1,
-      overflow: 'hidden', // ← this is critical
-    }}
-  >
-    <MainContent
+    <DesktopLayout
       view={view}
-      setView={handleViewChange}
-      setSelectedVideoId={setSelectedVideoId}
-      setChannel={(channelId) => {
-        setChannel(channelId);
-        setView('channelVideos');
-      }}
-      selectedChannel={channel}
+      setView={setView}
+      onVideoSelect={handleVideoSelect}
+      selectedVideoId={selectedVideoId}
+      videoSummaryData={videoSummaryData}
+      channel={channel}
+      setChannel={setChannel}
+      channelList={channelList}
+      recentVideos={recentVideos}
       channelScrollRef={channelScrollRef}
+      sidebarCollapsed={sidebarCollapsed}
+      toggleSidebar={toggleSidebar}
+      containerRef={containerRef}
+      resizerRef={resizerRef}
+      videoSummaryWidth={videoSummaryWidth}
+      isDragging={isDragging}
+      startResizing={startResizing}
     />
-  </main>
-
-  {/* Resizer */}
-  <div
-    ref={resizerRef}
-    onMouseDown={startResizing}
-    style={{
-      width: '6px',
-      cursor: 'col-resize',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'transparent',
-      userSelect: 'none',
-    }}
-  >
-    <div
-      style={{
-        width: '2px',
-        height: '90%',
-        borderRadius: '1px',
-        backgroundColor: isDragging ? '#666' : '#bbb',
-        opacity: isDragging ? 1 : 0.3,
-        transition: 'opacity 0.2s ease, background-color 0.2s ease',
-      }}
-    />
-  </div>
-
-  {/* Video Summary */}
-  <aside
-    className="p-4 bg-light"
-    style={{
-      width: `${videoSummaryWidth}px`,
-      minWidth: 200,
-      maxWidth: 1300,
-      flexShrink: 0,
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-    }}
-  >
-    <VideoSummary videoId={selectedVideoId} />
-  </aside>
-</div>
   );
 }
 

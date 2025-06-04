@@ -1,116 +1,117 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
-const videoData = [
-  {
-    video_id: 'wyTy4PmbRaM',
-    title: 'Bullish TRUMP News!',
-    channel_tag: '@MeetKevin',
-    published_at: '2025-05-12',
-  },
-  {
-    video_id: 'jpOjn0Jn9Qo',
-    title: 'Top 3 Best Stocks to Buy UNDER $15',
-    channel_tag: '@FinancialEducation',
-    published_at: '2025-05-08',
-  },
-  {
-    video_id: 'wyTy4PmbRaM',
-    title: 'Bullish TRUMP News!',
-    channel_tag: '@MeetKevin',
-    published_at: '2025-05-12',
-  },
-  {
-    video_id: 'jpOjn0Jn9Qo',
-    title: 'Top 3 Best Stocks to Buy UNDER $15',
-    channel_tag: '@FinancialEducation',
-    published_at: '2025-05-08',
-  },
-  {
-    video_id: 'wyTy4PmbRaM',
-    title: 'Bullish TRUMP News!',
-    channel_tag: '@MeetKevin',
-    published_at: '2025-05-12',
-  },
-  {
-    video_id: 'jpOjn0Jn9Qo',
-    title: 'Top 3 Best Stocks to Buy UNDER $15',
-    channel_tag: '@FinancialEducation',
-    published_at: '2025-05-08',
-  },
-  {
-    video_id: 'wyTy4PmbRaM',
-    title: 'Bullish TRUMP News!',
-    channel_tag: '@MeetKevin',
-    published_at: '2025-05-12',
-  },
-  {
-    video_id: 'jpOjn0Jn9Qo',
-    title: 'Top 3 Best Stocks to Buy UNDER $15',
-    channel_tag: '@FinancialEducation',
-    published_at: '2025-05-08',
-  }
-];
+function formatSubs(n) {
+  if (!n) return '';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toString();
+}
 
-function RecentVideos({ onVideoClick }) {
-  const listRef = useRef(null);
-  const scrollRef = useRef(0);
+function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], selectedVideoId}) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState('title');
+  const [sortBy, setSortBy] = useState('published_at');
+  const [videos, setVideos] = useState(preloadedVideos);
 
   useEffect(() => {
-    const container = listRef.current;
-    if (!container) return;
-    container.scrollTop = scrollRef.current;
+    setVideos(preloadedVideos);
+  }, [preloadedVideos]);
 
-    const handleScroll = () => {
-      scrollRef.current = container.scrollTop;
-    };
+  const filtered = videos.filter((video) => {
+    const field = searchMode === 'channel' ? video.channel_tag : video.title;
+    return field?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'subscriber_count') {
+      return (b.subscriber_count || 0) - (a.subscriber_count || 0);
+    }
+    return new Date(b.published_at) - new Date(a.published_at);
+  });
+
+  const channelMap = Object.fromEntries(
+    (channelList || []).map((ch) => [ch.channel_tag, ch])
+  );
+
+  const isMobile = window.innerWidth < 768;
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        <h5>Recent Videos</h5>
-        {videoData.map((vid) => (
+    <div className="p-3" style={{ paddingTop: '0.5rem' }}>
+      <div className="mb-3 d-flex flex-column gap-2">
+        <input
+          type="text"
+          className="form-control form-control-sm"
+          placeholder={`Search videos by ${searchMode}`}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
+        <div className="d-flex justify-content-start align-items-center gap-3 px-1" style={{ fontSize: '0.875rem' }}>
           <div
-            key={vid.video_id}
-            className="card mb-2 p-2 d-flex flex-row align-items-start"
-            onClick={() => onVideoClick(vid.video_id)}
+            style={{ cursor: 'pointer', fontWeight: 500 }}
+            onClick={() => setSearchMode(searchMode === 'title' ? 'channel' : 'title')}
+          >
+            {searchMode === 'title' ? 'Title ▼' : 'Channel ▼'}
+          </div>
+          <div
+            style={{ cursor: 'pointer', fontWeight: 500 }}
+            onClick={() => setSortBy(sortBy === 'published_at' ? 'subscriber_count' : 'published_at')}
+          >
+            {sortBy === 'published_at' ? 'Date ▼' : 'Subscriber Count ▼'}
+          </div>
+        </div>
+      </div>
+
+      {sorted.map((video) => {
+        const channel = channelMap[video.channel_tag];
+        const displayTag = video.channel_tag.replace(/^@+/, '@');
+        const subCount = formatSubs(channel?.subscriber_count);
+        const dateString = formatDistanceToNow(new Date(video.published_at), { addSuffix: true });
+        const isSelected = selectedVideoId === video.video_id;
+
+        return (
+          <div
+            key={video.video_id + video.published_at}
+            onClick={() => {
+              onVideoClick(video.video_id); 
+            }}
+            className="d-flex gap-3 align-items-start mb-2 rounded border shadow-sm"
             style={{
-              flexWrap: 'nowrap',
-              overflow: 'hidden',
-              minWidth: 0,
+              borderRadius: '16px',
+              backgroundColor: isSelected ? '#eef6ff' : '#fff',
+              padding: '0.75rem',
               cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              transition: 'all 0.2s ease-in-out',
+              transition: 'all 0.2s ease',
+              borderTop: isSelected ? '1px solid #0d6efd' : '1px solid #d4d7dc',
+              borderRight: isSelected ? '1px solid #0d6efd' : '1px solid #d4d7dc',
+              borderBottom: isSelected ? '1px solid #0d6efd' : '1px solid #d4d7dc',
+              borderLeft: isSelected ? '4px solid #0d6efd' : '4px solid transparent'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-              e.currentTarget.style.transform = 'scale(1.01)';
+              if (!isMobile) e.currentTarget.style.backgroundColor = '#f2f6ff';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
-              e.currentTarget.style.transform = 'none';
+              if (!isMobile) e.currentTarget.style.backgroundColor = isSelected ? '#eef6ff' : '#fff';
             }}
           >
             <img
-              src={`http://img.youtube.com/vi/${vid.video_id}/hqdefault.jpg`}
-              alt={vid.title}
+              src={`https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
+              alt={video.title}
               width={100}
               height={60}
-              className="rounded me-3"
+              className="rounded"
               style={{ objectFit: 'cover', flexShrink: 0 }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="fw-semibold" style={{ fontSize: '0.9rem', wordBreak: 'break-word' }}>{vid.title}</div>
-              <div className="text-muted" style={{ fontSize: '0.75rem', wordBreak: 'break-word' }}>
-                {vid.channel_tag} | {vid.published_at}
+              <div className="fw-semibold" style={{ fontSize: '0.92rem', marginBottom: '0.2rem' }}>{video.title}</div>
+              <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                {displayTag} {subCount ? ` • ${subCount} subscribers` : ''} • {dateString}
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
