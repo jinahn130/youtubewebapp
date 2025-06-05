@@ -13,21 +13,23 @@ function DesktopLayout({
   setChannel,
   channelList,
   recentVideos,
-  channelScrollRef,
   sidebarCollapsed,
   toggleSidebar,
   containerRef,
   resizerRef,
   videoSummaryWidth,
   isDragging,
-  startResizing
+  startResizing,
+  isMobile,
 }) {
-  const [viewStateMap, setViewStateMap] = useState({});
 
-  const updateViewState = (partial) => {
-    setViewStateMap((prev) => ({
+  const scrollRefs = useRef({});       // ✅ per-view scroll container refs
+  const [scrollStack, setScrollStack] = useState({});
+
+  const updateViewScroll = (scrollTop) => {
+    setScrollStack((prev) => ({
       ...prev,
-      [view]: { ...prev[view], ...partial },
+      [view]: { ...prev[view], scrollTop },
     }));
   };
 
@@ -74,8 +76,8 @@ function DesktopLayout({
         <MainContent
           view={view}
           setView={setView}
-          setSelectedVideoId={onVideoSelect}
           selectedVideoId={selectedVideoId}
+          setSelectedVideoId={onVideoSelect}
           setChannel={(channelId) => {
             setChannel((prev) => {
               if (prev !== channelId) {
@@ -91,8 +93,10 @@ function DesktopLayout({
           selectedChannel={channel}
           channelList={channelList}
           recentVideos={recentVideos}
-          viewState={viewStateMap[view] || {}}
-          updateViewState={updateViewState}
+          scrollRefs={scrollRefs}
+          scrollStack={scrollStack}
+          updateViewScroll={updateViewScroll}
+          isMobile={false}
         />
       </div>
 

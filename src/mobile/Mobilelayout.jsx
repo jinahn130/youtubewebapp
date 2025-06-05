@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import MobileHeader from './MobileHeader';
 import MobileSidebar from './MobileSidebar';
 import MobileNavigator from './MobileNavigator';
@@ -19,8 +20,7 @@ function MobileLayout({
   const [viewStack, setViewStack] = useState([{ key: 'recent', state: {} }]);
   const [poppedStack, setPoppedStack] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const containerRefs = useRef({});
-  const touchStartX = useRef(null);
+  const containerRefs = useRef({}); //ScrollRef
 
   const current = viewStack[viewStack.length - 1];
 
@@ -48,25 +48,6 @@ function MobileLayout({
     });
   };
 
-  const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = (e) => {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (dx > 60 && viewStack.length > 1) {
-      const popped = viewStack[viewStack.length - 1];
-      setViewStack((prev) => prev.slice(0, -1));
-      setPoppedStack((prev) => [...prev, popped]);
-    } else if (dx < -60 && poppedStack.length > 0) {
-      const forward = poppedStack[poppedStack.length - 1];
-      setPoppedStack((prev) => prev.slice(0, -1));
-      setViewStack((prev) => [...prev, forward]);
-    }
-    touchStartX.current = null;
-  };
-
   const handleVideoClick = (videoId) => {
     onVideoSelect(videoId);
     pushView('videoSummary');
@@ -77,16 +58,12 @@ function MobileLayout({
     setViewStack([{ key: viewKey, state: {} }]);
   };
 
-  const renderView = (entry, index) => {
+  const renderView = (entry, index, commonProps = {}) => {
     const isTop = index === viewStack.length - 1;
     const refKey = `${entry.key}-${index}`;
     if (!containerRefs.current[refKey]) {
       containerRefs.current[refKey] = React.createRef();
     }
-    const commonProps = {
-      viewState: entry.state,
-      updateViewState,
-    };
 
     let content;
     switch (entry.key) {
@@ -183,36 +160,22 @@ function MobileLayout({
       default:
         content = <div className="p-3">Unknown view: {entry.key}</div>;
     }
+    return content;
+  };
 
     return (
       <div
-        key={refKey}
-        ref={containerRefs.current[refKey]}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
         style={{
-          flex: 1,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          display: isTop ? 'block' : 'none',
-          height: '100%',
-          paddingBottom: '4rem', // ensure bottom nav doesn't block content
+          position: 'absolute',
+          inset: 0, // top: 0, left: 0, right: 0, bottom: 0
+          display: 'flex',
+          flexDirection: 'column',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
-        {content}
-      </div>
-    );
-  };
 
-  return (
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        paddingBottom: 'env(safe-area-inset-bottom)', // support safe area
-      }}
-    >
       <MobileHeader onMenuClick={() => setSidebarOpen((prev) => !prev)} />
       {sidebarOpen && (
         <MobileSidebar
@@ -227,7 +190,102 @@ function MobileLayout({
           }}
         />
       )}
-      {viewStack.map((entry, idx) => renderView(entry, idx))}
+      <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+        <AnimatePresence initial={false}>
+          {viewStack.slice(-2).map((entry, idx, arr) => {
+            const isTop = idx === arr.length - 1;
+            const refKey = `${entry.key}-${viewStack.length - 2 + idx}`;
+            if (!containerRefs.current[refKey]) {
+              containerRefs.current[refKey] = React.createRef();
+            }
+
+            const commonProps = {
+              viewState: entry.state,
+              updateViewState,
+            };
+
+            const content = renderView(entry, viewStack.length - 2 + idx, commonProps);
+
+            if (!isTop) {
+              // 🟢 This is the previous screen, rendered behind
+              return (
+                <div
+                  key={refKey}
+                  ref={containerRefs.current[refKey]}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: '#fff',
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  paddingBottom: '4rem',
+                  zIndex: 1,
+                  height: '100%',
+                  minHeight: 0,
+                }}
+                >
+                  {content}
+                </div>
+              );
+            }
+
+            // 🔵 Topmost view, draggable
+            return (
+            <motion.div
+              key={refKey}
+              ref={containerRefs.current[refKey]}
+              drag={viewStack.length > 1 || poppedStack.length > 0 ? 'x' : false}
+              dragElastic={0.2}
+              onDragEnd={(event, info) => {
+                const offsetX = info.offset.x;
+
+                // Swipe right → popView if possible
+                if (offsetX > 60 && viewStack.length > 1) {
+                  popView();
+                  return;
+                }
+
+              // Swipe left → go forward only if a valid popped view exists
+              if (offsetX < -60) {
+                const forward = poppedStack[poppedStack.length - 1];
+                if (forward && typeof forward.key === 'string') {
+                  setPoppedStack((prev) => prev.slice(0, -1));
+                  setViewStack((prev) => [...prev, forward]);
+                } else {
+                  // ❌ INVALID SWIPE — animate snap back
+                  // trigger reset by returning with no state change
+                  return; // ✅ prevent bad swipe from staying off-screen
+                }
+              }
+              }}
+              initial={{ x: 0 }}
+              animate={{ x: 0 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ type: 'spring', bounce: 0.25, duration: 0.4 }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: '#fff',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                paddingBottom: '4rem',
+                zIndex: 1,
+                height: '100%',
+                minHeight: 0,
+              }}
+            >
+              {content}
+            </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
       <MobileNavigator currentView={current.key} setView={handleSelectView} />
     </div>
   );

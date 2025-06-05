@@ -3,7 +3,49 @@ import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
 import VideoSummary from './components/VideoSummary';
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() =>
+    matchMobile(window)
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(matchMobile(window));
+    };
+    handleResize(); // initial call
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
+function matchMobile(win) {
+  const ua = (win.navigator.userAgent || '').toLowerCase();
+  const width = win.innerWidth;
+  const height = win.innerHeight;
+  const touchCapable = 'ontouchstart' in win || win.navigator.maxTouchPoints > 0;
+
+  const knownMobileKeywords = [
+    'iphone', 'ipad', 'ipod', 'android', 'blackberry', 'mini', 'windows ce',
+    'palm', 'nexus', 'sm-', 'pixel', 'kindle', 'silk', 'mobile', 'tablet',
+    'touch', 'surface', 'playbook', 'opera mini', 'opera mobi', 'fennec',
+    'nintendo', 'bb10', 'meego', 'googlehome', 'nesthub', 'nest hub'
+  ];
+
+  const matchesUA = knownMobileKeywords.some((keyword) => ua.includes(keyword));
+  const isSmartDisplay = ua.includes('crkey') || ua.includes('nesthub');
+  const isIpadWithTouch = ua.includes('macintosh') && touchCapable; // covers iPadOS on Safari
+
+  const isScreenNarrow = width < 1024;
+  const isTabletSize = touchCapable && (width <= 1366 && height <= 1024);
+
+  return touchCapable && (matchesUA || isSmartDisplay || isIpadWithTouch || isScreenNarrow || isTabletSize);
+}
+
+
 function App() {
+  const isMobile = useIsMobile();
   const [view, setView] = useState(() => {
     const stored = localStorage.getItem('activeView');
     const validViews = ['recent', 'extract', 'channel', 'channelVideos'];
@@ -20,7 +62,6 @@ function App() {
   const resizerRef = useRef(null);
   const isResizing = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
-  const channelScrollRef = useRef(null);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebarCollapsed') === 'true';
@@ -113,7 +154,6 @@ function App() {
     };
   }, []);
 
-  const isMobile = window.innerWidth < 768;
 
   if (isMobile) {
     return (
@@ -127,7 +167,6 @@ function App() {
         setChannel={setChannel}
         channelList={channelList}
         recentVideos={recentVideos}
-        channelScrollRef={channelScrollRef}
       />
     );
   }
@@ -143,7 +182,6 @@ function App() {
       setChannel={setChannel}
       channelList={channelList}
       recentVideos={recentVideos}
-      channelScrollRef={channelScrollRef}
       sidebarCollapsed={sidebarCollapsed}
       toggleSidebar={toggleSidebar}
       containerRef={containerRef}

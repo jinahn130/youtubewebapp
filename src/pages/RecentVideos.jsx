@@ -59,7 +59,18 @@ function RecentVideos({
   const isMobile = window.innerWidth < 768;
 
   return (
-    <div className="p-3" style={{ paddingTop: '0.5rem' }} ref={listRef}>
+    <div
+      className="p-3"
+      ref={listRef}
+      style={{
+        paddingTop: '0.5rem',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        height: '100%',
+      }}
+    >
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h5 className="mb-0">🎬 Recent Videos</h5>
         <div className="d-flex align-items-center gap-3 px-1" style={{ fontSize: '0.875rem' }}>

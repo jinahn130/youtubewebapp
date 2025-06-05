@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RecentVideos from '../pages/RecentVideos';
 import ExtractView from '../pages/ExtractView';
 import ChannelList from '../pages/ChannelList';
@@ -12,12 +12,21 @@ function MainContent({
   setSelectedVideoId,
   setChannel,
   selectedChannel,
-  viewState = {},
-  updateViewState = () => {},
   channelList,
   recentVideos,
+  scrollRefs,
+  scrollStack,
+  updateViewScroll,
+  isMobile
 }) {
   const [selectedChannelTag, setSelectedChannelTag] = useState(null);
+
+  useEffect(() => {
+    const el = scrollRefs.current[view];
+    if (el && scrollStack[view]?.scrollTop != null) {
+      el.scrollTop = scrollStack[view].scrollTop;
+    }
+  }, [view]);
 
   let content;
 
@@ -29,10 +38,6 @@ function MainContent({
           channelList={channelList}
           preloadedVideos={recentVideos}
           selectedVideoId={selectedVideoId}
-          viewState={viewState.recent || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, recent: state })
-          }
         />
       );
       break;
@@ -41,10 +46,6 @@ function MainContent({
       content = (
         <ExtractView
           onVideoClick={setSelectedVideoId}
-          viewState={viewState.extract || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, extract: state })
-          }
         />
       );
       break;
@@ -62,10 +63,6 @@ function MainContent({
             }
           }}
           selectedChannelId={selectedChannelTag}
-          viewState={viewState.channel || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, channel: state })
-          }
         />
       );
       break;
@@ -77,7 +74,7 @@ function MainContent({
             style={{
               position: 'sticky',
               top: 0,
-              backgroundColor: '#fff',
+              backgroundColor: '#f1f3f4',
               zIndex: 10,
               padding: '0.75rem 1rem 0.5rem 1rem',
               borderBottom: '1px solid #dee2e6',
@@ -94,10 +91,6 @@ function MainContent({
             channelId={selectedChannel}
             onVideoClick={setSelectedVideoId}
             selectedVideoId={selectedVideoId}
-            viewState={viewState.channelVideos || {}}
-            updateViewState={(state) =>
-              updateViewState({ ...viewState, channelVideos: state })
-            }
           />
         </>
       );
@@ -106,7 +99,7 @@ function MainContent({
     case 'about':
       content = (
         <div className="p-3">
-          <About />
+          <About isMobile={false}/>
         </div>
       );
       break;
@@ -114,9 +107,14 @@ function MainContent({
     default:
       content = <div className="p-3">Welcome to the app!</div>;
   }
-
   return (
     <div
+      ref={(ref) => {
+        if (ref) scrollRefs.current[view] = ref;
+      }}
+      onScroll={(e) => {
+        updateViewScroll(e.target.scrollTop);
+      }}
       style={{
         flex: 1,
         overflowY: 'auto',
