@@ -1,4 +1,5 @@
 import React from 'react';
+import { MdHistory, MdBarChart, MdSubscriptions, MdInfo } from 'react-icons/md';
 
 function MobileSidebar({ currentView, onSelectView }) {
   return (
@@ -17,26 +18,34 @@ function MobileSidebar({ currentView, onSelectView }) {
     >
       <div className="d-flex flex-column">
         <button
-          className={`btn btn-link text-start px-4 py-3 ${currentView === 'recent' ? 'fw-bold text-primary' : ''}`}
+          className={`btn btn-link text-start px-4 py-3 d-flex align-items-center gap-2 ${currentView === 'recent' ? 'fw-bold text-primary' : ''}`}
           onClick={() => onSelectView('recent')}
         >
-          🕒 Recents
+          <MdHistory size={18} /> Recents
         </button>
         <button
-          className={`btn btn-link text-start px-4 py-3 ${currentView === 'extract' ? 'fw-bold text-primary' : ''}`}
+          className={`btn btn-link text-start px-4 py-3 d-flex align-items-center gap-2 ${currentView === 'extract' ? 'fw-bold text-primary' : ''}`}
           onClick={() => onSelectView('extract')}
         >
-          📈 Extract
+          <MdBarChart size={18} /> Extract
         </button>
         <button
-          className={`btn btn-link text-start px-4 py-3 ${currentView === 'channel' ? 'fw-bold text-primary' : ''}`}
+          className={`btn btn-link text-start px-4 py-3 d-flex align-items-center gap-2 ${currentView === 'channel' ? 'fw-bold text-primary' : ''}`}
           onClick={() => onSelectView('channel')}
         >
-          📺 Channel
+          <MdSubscriptions size={18} /> Channels
+        </button>
+        <button
+          className={`btn btn-link text-start px-4 py-3 d-flex align-items-center gap-2 ${
+            currentView === 'about' ? 'fw-bold text-primary' : ''
+          }`}
+          onClick={() => onSelectView('about')}
+        >
+          <MdInfo size={18} /> About
         </button>
         <button
           className="btn btn-outline-secondary mt-2 mx-4 mb-3"
-          onClick={() => onSelectView(null)}
+          onClick={() => onSelectView('CLOSE_ONLY')}
         >
           ✖ Close
         </button>

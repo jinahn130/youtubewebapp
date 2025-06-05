@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
 
 function VideoSummary({ videoId, summaryData, containerRef: externalRef }) {
-  const [fontFamily, setFontFamily] = useState('"Georgia", serif');
+  const [fontFamily, setFontFamily] = useState('system-ui');
   const [fontSize, setFontSize] = useState('0.9rem');
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const [sizeMenuOpen, setSizeMenuOpen] = useState(false);
 
   const localRef = useRef(null);
   const scrollRef = useRef(0);
@@ -27,9 +29,27 @@ function VideoSummary({ videoId, summaryData, containerRef: externalRef }) {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [containerRef]);
 
-  if (!summaryData) {
-    return <div className="p-3 text-muted">No summary available.</div>;
+  if (summaryData === null) {
+    return (
+      <div className="p-3 text-center text-muted" style={{ fontSize: '0.9rem' }}>
+        <div className="custom-spinner mb-2" />
+        <div>Loading summary...</div>
+      </div>
+    );
   }
+
+  const fontLabelMap = {
+    '"Georgia", serif': 'New York Times',
+    'system-ui': 'System',
+    'Georgia, serif': 'Georgia',
+    '"Helvetica Neue", sans-serif': 'Helvetica Neue',
+  };
+
+  const sizeLabelMap = {
+    '0.85rem': 'Small',
+    '0.9rem': 'Normal',
+    '1rem': 'Large',
+  };
 
   return (
     <div
@@ -38,29 +58,97 @@ function VideoSummary({ videoId, summaryData, containerRef: externalRef }) {
       style={{ lineHeight: 1.6, fontSize, fontFamily }}
     >
       <div className="d-flex justify-content-between align-items-center mb-2">
-        <h5 className="mb-0">Video Summary</h5>
-        <div className="d-flex gap-2 align-items-center">
-          <select
-            className="form-select form-select-sm"
-            value={fontFamily}
-            onChange={(e) => setFontFamily(e.target.value)}
-            style={{ width: 'auto', minWidth: '120px' }}
-          >
-            <option value='"Georgia", serif'>New York Times</option>
-            <option value='system-ui'>System</option>
-            <option value='Georgia, serif'>Georgia</option>
-            <option value='"Helvetica Neue", sans-serif'>Helvetica Neue</option>
-          </select>
-          <select
-            className="form-select form-select-sm"
-            value={fontSize}
-            onChange={(e) => setFontSize(e.target.value)}
-            style={{ width: 'auto', minWidth: '100px' }}
-          >
-            <option value='0.85rem'>Small</option>
-            <option value='0.9rem'>Normal</option>
-            <option value='1rem'>Large</option>
-          </select>
+        <h5 className="mb-0" style={{ fontWeight: 600 }}>VIDEO SUMMARY</h5>
+        <div className="d-flex gap-3 align-items-center" style={{ fontSize: '0.85rem' }}>
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => {
+                setFontMenuOpen((prev) => !prev);
+                setSizeMenuOpen(false);
+              }}
+              style={{ cursor: 'pointer', fontWeight: 500 }}
+            >
+              {fontLabelMap[fontFamily]} ▼
+            </div>
+            {fontMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.05)',
+                  zIndex: 1000,
+                  minWidth: '150px',
+                  overflow: 'hidden',
+                }}
+              >
+                {Object.entries(fontLabelMap).map(([value, label]) => (
+                  <div
+                    key={value}
+                    onClick={() => {
+                      setFontFamily(value);
+                      setFontMenuOpen(false);
+                    }}
+                    style={{
+                      padding: '0.4rem 0.75rem',
+                      cursor: 'pointer',
+                      backgroundColor: fontFamily === value ? '#f1f1f1' : '#fff',
+                    }}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => {
+                setSizeMenuOpen((prev) => !prev);
+                setFontMenuOpen(false);
+              }}
+              style={{ cursor: 'pointer', fontWeight: 500 }}
+            >
+              {sizeLabelMap[fontSize]} ▼
+            </div>
+            {sizeMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.05)',
+                  zIndex: 1000,
+                  minWidth: '120px',
+                  overflow: 'hidden',
+                }}
+              >
+                {Object.entries(sizeLabelMap).map(([value, label]) => (
+                  <div
+                    key={value}
+                    onClick={() => {
+                      setFontSize(value);
+                      setSizeMenuOpen(false);
+                    }}
+                    style={{
+                      padding: '0.4rem 0.75rem',
+                      cursor: 'pointer',
+                      backgroundColor: fontSize === value ? '#f1f1f1' : '#fff',
+                    }}
+                  >
+                    {label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -91,7 +179,8 @@ function VideoSummary({ videoId, summaryData, containerRef: externalRef }) {
       </div>
 
       <div className="mb-3">
-        <strong>Published: </strong> {new Date(summaryData.published_at).toLocaleDateString()}
+        <strong>Published: </strong>{' '}
+        {new Date(summaryData.published_at).toLocaleDateString()}
       </div>
 
       <hr style={{ borderTop: '1px solid #ccc', margin: '1rem 0' }} />

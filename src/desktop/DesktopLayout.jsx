@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import MainContent from './MainContent';
 import VideoSummary from '../components/VideoSummary';
@@ -22,6 +22,15 @@ function DesktopLayout({
   isDragging,
   startResizing
 }) {
+  const [viewStateMap, setViewStateMap] = useState({});
+
+  const updateViewState = (partial) => {
+    setViewStateMap((prev) => ({
+      ...prev,
+      [view]: { ...prev[view], ...partial },
+    }));
+  };
+
   return (
     <div
       ref={containerRef}
@@ -46,8 +55,8 @@ function DesktopLayout({
       >
         <Sidebar
           collapsed={sidebarCollapsed}
-          toggleCollapsed={toggleSidebar}
-          activeView={view}
+          toggleCollapse={toggleSidebar}
+          currentView={view}
           setView={setView}
         />
       </div>
@@ -80,9 +89,10 @@ function DesktopLayout({
             });
           }}
           selectedChannel={channel}
-          channelScrollRef={channelScrollRef}
           channelList={channelList}
           recentVideos={recentVideos}
+          viewState={viewStateMap[view] || {}}
+          updateViewState={updateViewState}
         />
       </div>
 

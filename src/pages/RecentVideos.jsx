@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
 function formatSubs(n) {
@@ -8,15 +8,40 @@ function formatSubs(n) {
   return n.toString();
 }
 
-function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], selectedVideoId }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState('title');
-  const [sortBy, setSortBy] = useState('published_at');
+function RecentVideos({
+  onVideoClick,
+  channelList = [],
+  preloadedVideos = [],
+  selectedVideoId,
+  viewState = {},
+  updateViewState = () => {},
+}) {
+  const [searchQuery, setSearchQuery] = useState(viewState.searchQuery || '');
+  const [searchMode, setSearchMode] = useState(viewState.searchMode || 'title');
+  const [sortBy, setSortBy] = useState(viewState.sortBy || 'published_at');
   const [videos, setVideos] = useState(preloadedVideos);
+  const listRef = useRef(null);
 
   useEffect(() => {
     setVideos(preloadedVideos);
   }, [preloadedVideos]);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el && viewState.scrollTop != null) {
+      el.scrollTop = viewState.scrollTop;
+    }
+    return () => {
+      if (el) {
+        updateViewState({
+          scrollTop: el.scrollTop,
+          searchQuery,
+          searchMode,
+          sortBy,
+        });
+      }
+    };
+  }, [searchQuery, searchMode, sortBy]);
 
   const filtered = videos.filter((video) => {
     const field = searchMode === 'channel' ? video.channel_tag : video.title;
@@ -34,17 +59,10 @@ function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], se
   const isMobile = window.innerWidth < 768;
 
   return (
-    <div className="p-3" style={{ paddingTop: '0.5rem' }}>
-      <div className="mb-3 d-flex flex-column gap-2">
-        <input
-          type="text"
-          className="form-control form-control-sm"
-          placeholder={`Search videos by ${searchMode}`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-
-        <div className="d-flex justify-content-start align-items-center gap-3 px-1" style={{ fontSize: '0.875rem' }}>
+    <div className="p-3" style={{ paddingTop: '0.5rem' }} ref={listRef}>
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <h5 className="mb-0">🎬 Recent Videos</h5>
+        <div className="d-flex align-items-center gap-3 px-1" style={{ fontSize: '0.875rem' }}>
           <div
             style={{ cursor: 'pointer', fontWeight: 500 }}
             onClick={() => setSearchMode(searchMode === 'title' ? 'channel' : 'title')}
@@ -59,6 +77,14 @@ function RecentVideos({ onVideoClick, channelList = [], preloadedVideos = [], se
           </div>
         </div>
       </div>
+
+      <input
+        type="text"
+        className="form-control form-control-sm mb-3"
+        placeholder={`Search videos by ${searchMode}`}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
 
       {sorted.map((video) => {
         const channel = channelMap[video.channel_tag];

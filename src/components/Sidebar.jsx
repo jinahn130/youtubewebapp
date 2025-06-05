@@ -1,10 +1,11 @@
 import React from 'react';
-import { FaChevronLeft, FaChevronRight, FaHome, FaChartLine, FaList } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaHome, FaChartLine, FaList, FaInfoCircle } from 'react-icons/fa';
 
 const navItems = [
   { label: 'Recent', icon: <FaHome />, view: 'recent' },
   { label: 'Extract', icon: <FaChartLine />, view: 'extract' },
   { label: 'Channels', icon: <FaList />, view: 'channel' },
+  { label: 'About', icon: <FaInfoCircle />, view: 'about' }
 ];
 
 function Sidebar({ setView, currentView, collapsed, toggleCollapse }) {
@@ -82,15 +83,19 @@ function Sidebar({ setView, currentView, collapsed, toggleCollapse }) {
         ))}
       </ul>
 
-      {/* Footer */}
-      {!collapsed && (
-        <div
-          className="mt-auto px-3 py-2 text-muted"
-          style={{ fontSize: '0.72rem' }}
-        >
-          Built by Jutsu
-        </div>
-      )}
+      {/* Footer Logo */}
+      <div className="mt-auto text-center p-3">
+        <img
+          src="/digestjutsu-logo.png"
+          alt="DigestJutsu"
+          style={{
+            height: '120px',
+            maxWidth: '100%',
+            objectFit: 'contain',
+            opacity: 0.9,
+          }}
+        />
+      </div>
     </div>
   );
 }

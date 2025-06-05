@@ -1,6 +1,6 @@
 body {
   background-color: #f8f9fa;
-  font-family: system-ui, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; /* modern stack */ 
   margin: 0;
   padding: 0;
 }
@@ -73,4 +73,20 @@ select,
 input {
   border-radius: 8px;
   border: 1px solid #ccc;
+}
+
+.custom-spinner {
+  margin: 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #cce0ff;
+  border-top: 3px solid #0d6efd;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

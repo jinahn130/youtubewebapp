@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
-function ChannelVideos({ channelId, onVideoClick, selectedVideoId, setView }) {
+function ChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = {}, updateViewState = () => {} }) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState('published_at');
+  const [sortBy, setSortBy] = useState(viewState.sortBy || 'published_at');
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -25,6 +25,18 @@ function ChannelVideos({ channelId, onVideoClick, selectedVideoId, setView }) {
     };
     fetchVideos();
   }, [channelId]);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (el && viewState.scrollTop != null) {
+      el.scrollTop = viewState.scrollTop;
+    }
+    return () => {
+      if (el) {
+        updateViewState({ scrollTop: el.scrollTop, sortBy });
+      }
+    };
+  }, []);
 
   const sortedVideos = [...videos].sort((a, b) => {
     if (sortBy === 'published_at') {
