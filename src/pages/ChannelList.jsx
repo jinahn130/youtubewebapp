@@ -40,7 +40,8 @@ function ChannelList({
     }
   }, [channels.length, viewState.scrollTop]);
 
-  // ✅ Save scroll on every scroll event
+  /*
+  // ✅ Save scroll on every scroll event (Tracks while)
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
@@ -53,11 +54,12 @@ function ChannelList({
         clickedChannel,
       });
     };
-
+  
     el.addEventListener('scroll', handleScroll);
     return () => el.removeEventListener('scroll', handleScroll);
   }, [sortBy, query, clickedChannel]);
-
+  */
+ 
   // ✅ Keep highlight in sync from props
   useEffect(() => {
     if (selectedChannelId && selectedChannelId !== clickedChannel) {

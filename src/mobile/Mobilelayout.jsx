@@ -16,13 +16,41 @@ function MobileLayout({
   videoSummaryData,
   channelList,
   recentVideos,
+  isMobile,
 }) {
   const [viewStack, setViewStack] = useState([{ key: 'recent', state: {} }]);
   const [poppedStack, setPoppedStack] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const containerRefs = useRef({}); //ScrollRef
+  const [viewStateMap, setViewStateMap] = useState({});
+  const containerRefs = useRef({});
 
   const current = viewStack[viewStack.length - 1];
+
+  const getViewState = (key) => viewStateMap[key] || {};
+
+  const updateViewState = (partial) => {
+    setViewStack((prev) => {
+      const updated = [...prev];
+      const current = updated[updated.length - 1];
+      current.state = { ...current.state, ...partial };
+      setViewStateMap((prevMap) => ({
+        ...prevMap,
+        [current.key]: current.state,
+      }));
+      return updated;
+    });
+  };
+
+  //This grabs the current view’s state and copies it into viewStateMap.
+  const saveCurrentViewState = () => {
+    const current = viewStack[viewStack.length - 1];
+    if (current && current.state) {
+      setViewStateMap((prevMap) => ({
+        ...prevMap,
+        [current.key]: current.state,
+      }));
+    }
+  };
 
   const pushView = (key, state = {}) => {
     setPoppedStack([]);
@@ -31,21 +59,11 @@ function MobileLayout({
 
   const popView = () => {
     if (viewStack.length > 1) {
+      saveCurrentViewState(); // ✅ save before pop
       const popped = viewStack[viewStack.length - 1];
       setViewStack((prev) => prev.slice(0, -1));
       setPoppedStack((prev) => [...prev, popped]);
     }
-  };
-
-  const updateViewState = (partial) => {
-    setViewStack((prev) => {
-      const updated = [...prev];
-      updated[updated.length - 1].state = {
-        ...updated[updated.length - 1].state,
-        ...partial,
-      };
-      return updated;
-    });
   };
 
   const handleVideoClick = (videoId) => {
@@ -54,8 +72,11 @@ function MobileLayout({
   };
 
   const handleSelectView = (viewKey) => {
+    //This way nav sidebar/navigator changes will save the state as well
+    saveCurrentViewState();
     setPoppedStack([]);
-    setViewStack([{ key: viewKey, state: {} }]);
+    const restored = getViewState(viewKey);
+    setViewStack([{ key: viewKey, state: restored }]);
   };
 
   const renderView = (entry, index, commonProps = {}) => {
@@ -91,7 +112,7 @@ function MobileLayout({
           <ChannelList
             {...commonProps}
             channels={channelList}
-            selectedChannelId={entry.state.channelId}
+            selectedChannelId={entry.state.clickedChannel}
             onSelectChannel={(channelTag) => {
               const match = channelList.find((ch) => ch.channel_tag === channelTag);
               if (match) {
@@ -152,8 +173,7 @@ function MobileLayout({
       case 'about':
         content = (
           <div className="p-3" style={{ flex: 1, overflowY: 'auto' }}>
-            <h5>About DigestJutsu</h5>
-            <About></About>
+            <About isMobile={true}></About>
           </div>
         );
         break;
@@ -163,19 +183,18 @@ function MobileLayout({
     return content;
   };
 
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0, // top: 0, left: 0, right: 0, bottom: 0
-          display: 'flex',
-          flexDirection: 'column',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          minHeight: 0,
-          overflow: 'hidden',
-        }}
-      >
-
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
       <MobileHeader onMenuClick={() => setSidebarOpen((prev) => !prev)} />
       {sidebarOpen && (
         <MobileSidebar
@@ -206,82 +225,63 @@ function MobileLayout({
 
             const content = renderView(entry, viewStack.length - 2 + idx, commonProps);
 
-            if (!isTop) {
-              // 🟢 This is the previous screen, rendered behind
-              return (
-                <div
-                  key={refKey}
-                  ref={containerRefs.current[refKey]}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: '#fff',
-                  overflowY: 'auto',
-                  WebkitOverflowScrolling: 'touch',
-                  paddingBottom: '4rem',
-                  zIndex: 1,
-                  height: '100%',
-                  minHeight: 0,
+            const sharedStyle = {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#fff',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: '4rem',
+              zIndex: 1,
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            };
+
+            return isTop ? (
+              <motion.div
+                key={refKey}
+                ref={containerRefs.current[refKey]}
+                drag={viewStack.length > 1 || poppedStack.length > 0 ? 'x' : false}
+                dragElastic={0.2}
+                onDragEnd={(event, info) => {
+
+                   // Swipe right → pop
+                  const offsetX = info.offset.x;
+                  if (offsetX > 60 && viewStack.length > 1) {
+                    popView(); // remove from view stack + add to popstack
+                    return;
+                  }
+                  
+                  // Swipe left
+                  if (offsetX < -60) {
+                    //if there is nothing to pop, you do not want to render a new view
+                    if(popStack.length == 0) return
+                    const forward = poppedStack[poppedStack.length - 1];
+                    
+                    if (forward && typeof forward.key === 'string') {
+                      saveCurrentViewState();
+                      setPoppedStack((prev) => prev.slice(0, -1));
+                      setViewStack((prev) => [...prev, forward]);
+                    }
+                  }
                 }}
-                >
-                  {content}
-                </div>
-              );
-            }
-
-            // 🔵 Topmost view, draggable
-            return (
-            <motion.div
-              key={refKey}
-              ref={containerRefs.current[refKey]}
-              drag={viewStack.length > 1 || poppedStack.length > 0 ? 'x' : false}
-              dragElastic={0.2}
-              onDragEnd={(event, info) => {
-                const offsetX = info.offset.x;
-
-                // Swipe right → popView if possible
-                if (offsetX > 60 && viewStack.length > 1) {
-                  popView();
-                  return;
-                }
-
-              // Swipe left → go forward only if a valid popped view exists
-              if (offsetX < -60) {
-                const forward = poppedStack[poppedStack.length - 1];
-                if (forward && typeof forward.key === 'string') {
-                  setPoppedStack((prev) => prev.slice(0, -1));
-                  setViewStack((prev) => [...prev, forward]);
-                } else {
-                  // ❌ INVALID SWIPE — animate snap back
-                  // trigger reset by returning with no state change
-                  return; // ✅ prevent bad swipe from staying off-screen
-                }
-              }
-              }}
-              initial={{ x: 0 }}
-              animate={{ x: 0 }}
-              exit={{ x: -100, opacity: 0 }}
-              transition={{ type: 'spring', bounce: 0.25, duration: 0.4 }}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: '#fff',
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch',
-                paddingBottom: '4rem',
-                zIndex: 1,
-                height: '100%',
-                minHeight: 0,
-              }}
-            >
-              {content}
-            </motion.div>
+                initial={{ x: 0 }}
+                animate={{ x: 0 }}
+                exit={{ x: -100, opacity: 0 }}
+                transition={{ type: 'spring', bounce: 0.25, duration: 0.4 }}
+                style={sharedStyle}
+              >
+                {content}
+              </motion.div>
+            ) : (
+              <div key={refKey} ref={containerRefs.current[refKey]} style={sharedStyle}>
+                {content}
+              </div>
             );
           })}
         </AnimatePresence>
