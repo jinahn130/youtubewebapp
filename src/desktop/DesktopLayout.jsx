@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import MainContent from './MainContent';
-import VideoSummary from '../components/VideoSummary';
 
 function DesktopLayout({
   view,
@@ -13,7 +12,6 @@ function DesktopLayout({
   setChannel,
   channelList,
   recentVideos,
-  channelScrollRef,
   sidebarCollapsed,
   toggleSidebar,
   containerRef,
@@ -22,14 +20,29 @@ function DesktopLayout({
   isDragging,
   startResizing
 }) {
+  const scrollContainerRef = useRef(null);
   const [viewStateMap, setViewStateMap] = useState({});
 
-  const updateViewState = (partial) => {
+  const updateViewState = (key, partial) => {
     setViewStateMap((prev) => ({
       ...prev,
-      [view]: { ...prev[view], ...partial },
+      [key]: { ...prev[key], ...partial },
     }));
+    console.log(`[SAVE] updateViewState('${key}') →`, { ...viewStateMap[key], ...partial });
   };
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    const scrollTop = viewStateMap.channel?.scrollTop;
+    if (view === 'channel' && el && typeof scrollTop === 'number') {
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        el.scrollTop = scrollTop;
+        console.log('[FINAL RESTORE] HARD-APPLIED scrollTop', scrollTop);
+      });
+    }, 0);
+    }
+  }, [view]);
 
   return (
     <div
@@ -42,94 +55,49 @@ function DesktopLayout({
         overflow: 'hidden',
       }}
     >
-      {/* Sidebar */}
       <div
         style={{
-          width: sidebarCollapsed ? '60px' : '160px',
-          flexShrink: 0,
+          width: sidebarCollapsed ? '3rem' : '16rem',
+          transition: 'width 0.2s ease',
+          borderRight: '1px solid #dee2e6',
           display: 'flex',
           flexDirection: 'column',
-          borderRight: '1px solid #dee2e6',
-          backgroundColor: '#fff',
         }}
       >
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-          currentView={view}
-          setView={setView}
-        />
+        <Sidebar setView={setView} view={view} collapsed={sidebarCollapsed} toggleSidebar={toggleSidebar} />
       </div>
 
-      {/* Main Content */}
       <div
+        ref={scrollContainerRef}
+        onScroll={(e) => {
+          if (view === 'channel') {
+            updateViewState('channel', {
+              ...viewStateMap.channel,
+              scrollTop: e.currentTarget.scrollTop,
+            });
+          }
+        }}
         style={{
           flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
           minWidth: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          padding: '1rem',
         }}
       >
         <MainContent
           view={view}
           setView={setView}
-          setSelectedVideoId={onVideoSelect}
           selectedVideoId={selectedVideoId}
-          setChannel={(channelId) => {
-            setChannel((prev) => {
-              if (prev !== channelId) {
-                setView('channelVideos');
-                return channelId;
-              } else {
-                setView('');
-                setTimeout(() => setView('channelVideos'), 0);
-                return prev;
-              }
-            });
-          }}
+          setSelectedVideoId={onVideoSelect}
+          setChannel={setChannel}
           selectedChannel={channel}
+          viewState={viewStateMap}
+          updateViewState={updateViewState}
           channelList={channelList}
           recentVideos={recentVideos}
-          viewState={viewStateMap[view] || {}}
-          updateViewState={updateViewState}
         />
       </div>
-
-      {/* Resizer */}
-      <div
-        ref={resizerRef}
-        onMouseDown={startResizing}
-        style={{
-          width: '6px',
-          cursor: 'col-resize',
-          backgroundColor: isDragging ? '#ccc' : '#f1f1f1',
-          flexShrink: 0,
-          zIndex: 10,
-        }}
-      />
-
-      {/* Video Summary */}
-      <aside
-        style={{
-          width: `${videoSummaryWidth}px`,
-          minWidth: '300px',
-          maxWidth: '1000px',
-          flexShrink: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          backgroundColor: '#fff',
-          borderLeft: '1px solid #dee2e6',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <VideoSummary
-          videoId={selectedVideoId}
-          summaryData={videoSummaryData}
-          containerRef={containerRef}
-        />
-      </aside>
     </div>
   );
 }

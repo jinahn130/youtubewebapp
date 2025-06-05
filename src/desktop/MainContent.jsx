@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import RecentVideos from '../pages/RecentVideos';
 import ExtractView from '../pages/ExtractView';
 import ChannelList from '../pages/ChannelList';
@@ -17,7 +17,9 @@ function MainContent({
   channelList,
   recentVideos,
 }) {
-  const [selectedChannelTag, setSelectedChannelTag] = useState(null);
+  const selectedChannelTag = selectedChannel
+    ? channelList.find((ch) => ch.channel_id === selectedChannel)?.channel_tag
+    : null;
 
   let content;
 
@@ -30,9 +32,7 @@ function MainContent({
           preloadedVideos={recentVideos}
           selectedVideoId={selectedVideoId}
           viewState={viewState.recent || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, recent: state })
-          }
+          updateViewState={(state) => updateViewState('recent', state)}
         />
       );
       break;
@@ -42,9 +42,7 @@ function MainContent({
         <ExtractView
           onVideoClick={setSelectedVideoId}
           viewState={viewState.extract || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, extract: state })
-          }
+          updateViewState={(state) => updateViewState('extract', state)}
         />
       );
       break;
@@ -54,7 +52,6 @@ function MainContent({
         <ChannelList
           channels={channelList}
           onSelectChannel={(channelTag) => {
-            setSelectedChannelTag(channelTag);
             const match = channelList.find((ch) => ch.channel_tag === channelTag);
             if (match) {
               setChannel(match.channel_id);
@@ -63,9 +60,7 @@ function MainContent({
           }}
           selectedChannelId={selectedChannelTag}
           viewState={viewState.channel || {}}
-          updateViewState={(state) =>
-            updateViewState({ ...viewState, channel: state })
-          }
+          updateViewState={(state) => updateViewState('channel', state)}
         />
       );
       break;
@@ -76,7 +71,10 @@ function MainContent({
           <div className="px-3 pt-2">
             <button
               className="btn btn-sm btn-outline-secondary mb-2"
-              onClick={() => setView('channel')}
+              onClick={() => {
+                setChannel(null);
+                setView('channel');
+              }}
             >
               ← Back to Channels
             </button>
@@ -86,9 +84,7 @@ function MainContent({
             onVideoClick={setSelectedVideoId}
             selectedVideoId={selectedVideoId}
             viewState={viewState.channelVideos || {}}
-            updateViewState={(state) =>
-              updateViewState({ ...viewState, channelVideos: state })
-            }
+            updateViewState={(state) => updateViewState('channelVideos', state)}
           />
         </>
       );
@@ -106,19 +102,7 @@ function MainContent({
       content = <div className="p-3">Welcome to the app!</div>;
   }
 
-  return (
-    <div
-      style={{
-        flex: 1,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        minWidth: 0,
-        padding: '1rem',
-      }}
-    >
-      {content}
-    </div>
-  );
+  return content;
 }
 
 export default MainContent;

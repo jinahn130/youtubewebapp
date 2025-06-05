@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 
-function ChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = {}, updateViewState = () => {} }) {
+function ChannelVideos({
+  channelId,
+  onVideoClick,
+  selectedVideoId,
+  viewState = {},
+  updateViewState = () => {},
+}) {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState(viewState.sortBy || 'published_at');
@@ -26,17 +32,28 @@ function ChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = {
     fetchVideos();
   }, [channelId]);
 
+  // ✅ Restore scroll when channelId or viewState changes
   useEffect(() => {
     const el = listRef.current;
-    if (el && viewState.scrollTop != null) {
-      el.scrollTop = viewState.scrollTop;
+    if (el && typeof viewState.scrollTop === 'number') {
+      setTimeout(() => {
+        el.scrollTop = viewState.scrollTop;
+      }, 0);
     }
+  }, [channelId, viewState.scrollTop]);
+
+  // ✅ Save scroll on unmount
+  useEffect(() => {
+    const el = listRef.current;
     return () => {
       if (el) {
-        updateViewState({ scrollTop: el.scrollTop, sortBy });
+        updateViewState({
+          scrollTop: el.scrollTop,
+          sortBy,
+        });
       }
     };
-  }, []);
+  }, [sortBy]);
 
   const sortedVideos = [...videos].sort((a, b) => {
     if (sortBy === 'published_at') {
