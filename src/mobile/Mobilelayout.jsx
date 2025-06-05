@@ -7,6 +7,7 @@ import ExtractView from '../pages/ExtractView';
 import ChannelList from '../pages/ChannelList';
 import ChannelVideos from '../pages/ChannelVideos';
 import VideoSummary from '../components/VideoSummary';
+import About from '../pages/About';
 
 function MobileLayout({
   onVideoSelect,
@@ -175,7 +176,7 @@ function MobileLayout({
         content = (
           <div className="p-3" style={{ flex: 1, overflowY: 'auto' }}>
             <h5>About DigestJutsu</h5>
-            <p>This app summarizes investment insights from YouTube finance creators using AI.</p>
+            <About></About>
           </div>
         );
         break;

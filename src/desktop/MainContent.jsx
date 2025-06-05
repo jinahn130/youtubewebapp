@@ -73,9 +73,18 @@ function MainContent({
     case 'channelVideos':
       content = (
         <>
-          <div className="px-3 pt-2">
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              backgroundColor: '#fff',
+              zIndex: 10,
+              padding: '0.75rem 1rem 0.5rem 1rem',
+              borderBottom: '1px solid #dee2e6',
+            }}
+          >
             <button
-              className="btn btn-sm btn-outline-secondary mb-2"
+              className="btn btn-sm btn-outline-secondary"
               onClick={() => setView('channel')}
             >
               ← Back to Channels
