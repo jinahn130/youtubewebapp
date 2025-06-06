@@ -29,7 +29,7 @@ function ChannelList({
   const isMobile = window.innerWidth < 768;
   const hoverTimeout = useRef(null);
 
-  // ✅ Restore scroll AFTER DOM and channels are ready
+  // Restore scroll AFTER channels are ready
   useEffect(() => {
     if (!channels.length) return;
     const el = listRef.current;
@@ -40,7 +40,7 @@ function ChannelList({
     }
   }, [channels.length, viewState.scrollTop]);
 
-  // ✅ Save scroll on every scroll event
+  // Save scroll + filters on every scroll
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
@@ -58,7 +58,6 @@ function ChannelList({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [sortBy, query, clickedChannel]);
 
-  // ✅ Keep highlight in sync from props
   useEffect(() => {
     if (selectedChannelId && selectedChannelId !== clickedChannel) {
       setClickedChannel(selectedChannelId);
