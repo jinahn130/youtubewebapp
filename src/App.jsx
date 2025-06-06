@@ -2,17 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
 import VideoSummary from './components/VideoSummary';
+import './App.css';
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() =>
-    matchMobile(window)
-  );
+  const [isMobile, setIsMobile] = useState(() => matchMobile(window));
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(matchMobile(window));
     };
-    handleResize(); // initial call
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -35,14 +34,12 @@ function matchMobile(win) {
 
   const matchesUA = knownMobileKeywords.some((keyword) => ua.includes(keyword));
   const isSmartDisplay = ua.includes('crkey') || ua.includes('nesthub');
-  const isIpadWithTouch = ua.includes('macintosh') && touchCapable; // covers iPadOS on Safari
-
+  const isIpadWithTouch = ua.includes('macintosh') && touchCapable;
   const isScreenNarrow = width < 1024;
   const isTabletSize = touchCapable && (width <= 1366 && height <= 1024);
 
   return touchCapable && (matchesUA || isSmartDisplay || isIpadWithTouch || isScreenNarrow || isTabletSize);
 }
-
 
 function App() {
   const isMobile = useIsMobile();
@@ -154,19 +151,9 @@ function App() {
     };
   }, []);
 
-
   if (isMobile) {
     return (
-      <div
-        style={{
-          touchAction: 'pan-y',            // 🛑 Disables horizontal swipes on safari
-          overscrollBehaviorX: 'none',     // 🛑 Blocks tab-switch swipe
-          overscrollBehaviorY: 'contain',  // ✅ Optional: keep vertical bounce
-          height: '100%',
-          width: '100%',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="safe-swipe-wrapper">
         <MobileLayout
           view={view}
           setView={handleViewChange}
