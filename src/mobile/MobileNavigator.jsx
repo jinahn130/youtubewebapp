@@ -37,9 +37,11 @@ function MobileNavigator({ currentView, setView }) {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: isActive ? '#000' : '#999',
+              color: isActive ? '#0d6efd' : '#666',
               fontWeight: isActive ? 600 : 400,
               transition: 'color 0.2s ease',
+              borderRadius: '12px',
+              padding: '0.2rem 0.4rem',
             }}
           >
             {opt.icon}

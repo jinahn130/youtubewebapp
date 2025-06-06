@@ -8,6 +8,7 @@ import ChannelList from '../pages/ChannelList';
 import ChannelVideos from '../pages/ChannelVideos';
 import VideoSummary from '../components/VideoSummary';
 import About from '../pages/About';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 
 function MobileLayout({
   onVideoSelect,
@@ -21,6 +22,7 @@ function MobileLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const containerRefs = useRef({});
   const touchStartX = useRef(null);
+  const [touchDeltaX, setTouchDeltaX] = useState(0);
 
   const current = viewStack[viewStack.length - 1];
 
@@ -50,21 +52,29 @@ function MobileLayout({
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
+    setTouchDeltaX(0);
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.touches[0].clientX - touchStartX.current;
+    setTouchDeltaX(dx);
   };
 
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (dx > 60 && viewStack.length > 1) {
+    if (dx > 140 && viewStack.length > 1) {
       const popped = viewStack[viewStack.length - 1];
       setViewStack((prev) => prev.slice(0, -1));
       setPoppedStack((prev) => [...prev, popped]);
-    } else if (dx < -60 && poppedStack.length > 0) {
+    } else if (dx < -140 && poppedStack.length > 0) {
       const forward = poppedStack[poppedStack.length - 1];
       setPoppedStack((prev) => prev.slice(0, -1));
       setViewStack((prev) => [...prev, forward]);
     }
     touchStartX.current = null;
+    setTouchDeltaX(0);
   };
 
   const handleVideoClick = (videoId) => {
@@ -189,6 +199,7 @@ function MobileLayout({
         key={refKey}
         ref={containerRefs.current[refKey]}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
           flex: 1,
@@ -211,6 +222,7 @@ function MobileLayout({
         display: 'flex',
         flexDirection: 'column',
         paddingBottom: 'env(safe-area-inset-bottom)',
+        position: 'relative',
       }}
     >
       <MobileHeader onMenuClick={() => setSidebarOpen((prev) => !prev)} />
@@ -228,6 +240,29 @@ function MobileLayout({
         />
       )}
       {viewStack.map((entry, idx) => renderView(entry, idx))}
+
+      {/* Swipe Direction Arrow Overlay */}
+      {Math.abs(touchDeltaX) > 20 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: `translate(-50%, -50%) translateX(${touchDeltaX * 0.3}px)`,
+            zIndex: 999,
+            pointerEvents: 'none',
+            opacity: Math.min(Math.abs(touchDeltaX) / 140, 1),
+            transition: 'transform 0.1s ease-out',
+          }}
+        >
+          {touchDeltaX > 0 ? (
+            <MdKeyboardArrowLeft size={48} style={{ color: '#0d6efd', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }} />
+          ) : (
+            <MdKeyboardArrowRight size={48} style={{ color: '#0d6efd', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }} />
+          )}
+        </div>
+      )}
+
       <MobileNavigator currentView={current.key} setView={handleSelectView} />
     </div>
   );
