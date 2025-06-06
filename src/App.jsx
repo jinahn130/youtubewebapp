@@ -33,6 +33,15 @@ function matchMobile(win) {
   ];
 
   const matchesUA = knownMobileKeywords.some((keyword) => ua.includes(keyword));
+
+  // 👇 Force mobile mode for AdSense/Mediapartners bots
+  const isAdSenseBot = ua.includes('adsense') || ua.includes('googlebot') || ua.includes('mediapartners');
+
+  // Optional: Allow override via URL for debugging
+  const urlOverride = win.location.search.includes('forceMobile=true');
+
+  if (isAdSenseBot || urlOverride) return true;
+  
   const isSmartDisplay = ua.includes('crkey') || ua.includes('nesthub');
   const isIpadWithTouch = ua.includes('macintosh') && touchCapable;
   const isScreenNarrow = width < 1024;
