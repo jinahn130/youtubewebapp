@@ -157,17 +157,28 @@ function App() {
 
   if (isMobile) {
     return (
-      <MobileLayout
-        view={view}
-        setView={handleViewChange}
-        onVideoSelect={handleVideoSelect}
-        selectedVideoId={selectedVideoId}
-        videoSummaryData={videoSummaryData}
-        channel={channel}
-        setChannel={setChannel}
-        channelList={channelList}
-        recentVideos={recentVideos}
-      />
+      <div
+        style={{
+          touchAction: 'pan-y',            // 🛑 Disables horizontal swipes on safari
+          overscrollBehaviorX: 'none',     // 🛑 Blocks tab-switch swipe
+          overscrollBehaviorY: 'contain',  // ✅ Optional: keep vertical bounce
+          height: '100%',
+          width: '100%',
+          overflow: 'hidden',
+        }}
+      >
+        <MobileLayout
+          view={view}
+          setView={handleViewChange}
+          onVideoSelect={handleVideoSelect}
+          selectedVideoId={selectedVideoId}
+          videoSummaryData={videoSummaryData}
+          channel={channel}
+          setChannel={setChannel}
+          channelList={channelList}
+          recentVideos={recentVideos}
+        />
+      </div>
     );
   }
 

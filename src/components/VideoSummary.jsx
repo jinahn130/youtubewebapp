@@ -33,7 +33,7 @@ function VideoSummary({ videoId, summaryData, containerRef: externalRef }) {
     return (
       <div className="p-3 text-center text-muted" style={{ fontSize: '0.9rem' }}>
         <div className="custom-spinner mb-2" />
-        <div>Loading summary...</div>
+        <div>Please click on a summary to read...</div>
       </div>
     );
   }
