@@ -20,27 +20,13 @@ function RecentVideos({
   const [searchMode, setSearchMode] = useState(viewState.searchMode || 'title');
   const [sortBy, setSortBy] = useState(viewState.sortBy || 'published_at');
   const [videos, setVideos] = useState(preloadedVideos);
-  const listRef = useRef(null);
 
   useEffect(() => {
     setVideos(preloadedVideos);
   }, [preloadedVideos]);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (el && viewState.scrollTop != null) {
-      el.scrollTop = viewState.scrollTop;
-    }
-    return () => {
-      if (el) {
-        updateViewState({
-          scrollTop: el.scrollTop,
-          searchQuery,
-          searchMode,
-          sortBy,
-        });
-      }
-    };
+    updateViewState({ searchQuery, searchMode, sortBy });
   }, [searchQuery, searchMode, sortBy]);
 
   const filtered = videos.filter((video) => {
@@ -61,7 +47,6 @@ function RecentVideos({
   return (
     <div
       className="p-3"
-      ref={listRef}
       style={{
         paddingTop: '0.5rem',
         flex: 1,

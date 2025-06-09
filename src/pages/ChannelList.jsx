@@ -15,7 +15,6 @@ function ChannelList({
   viewState = {},
   updateViewState = () => {},
 }) {
-  const listRef = useRef(null);
   const cardRefs = useRef({});
   const [hoveredChannel, setHoveredChannel] = useState(null);
   const [hoveredRef, setHoveredRef] = useState(null);
@@ -29,33 +28,8 @@ function ChannelList({
   const isMobile = window.innerWidth < 768;
   const hoverTimeout = useRef(null);
 
-  // Restore scroll AFTER channels are ready
   useEffect(() => {
-    if (!channels.length) return;
-    const el = listRef.current;
-    if (el && viewState.scrollTop != null) {
-      setTimeout(() => {
-        el.scrollTop = viewState.scrollTop;
-      }, 0);
-    }
-  }, [channels.length, viewState.scrollTop]);
-
-  // Save scroll + filters on every scroll
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
-
-    const handleScroll = () => {
-      updateViewState({
-        scrollTop: el.scrollTop,
-        sortBy,
-        query,
-        clickedChannel,
-      });
-    };
-
-    el.addEventListener('scroll', handleScroll);
-    return () => el.removeEventListener('scroll', handleScroll);
+    updateViewState({ sortBy, query, clickedChannel });
   }, [sortBy, query, clickedChannel]);
 
   useEffect(() => {
@@ -91,7 +65,7 @@ function ChannelList({
   };
 
   return (
-    <div className="p-3" style={{ minHeight: '100%', width: '100%' }} ref={listRef}>
+    <div className="p-3" style={{ minHeight: '100%', width: '100%' }}>
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h5 className="mb-0">📺 Channels</h5>
         <div className="d-flex align-items-center gap-3 px-1" style={{ fontSize: '0.875rem' }}>
