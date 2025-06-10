@@ -79,7 +79,6 @@ function MainContent({
               setView('channelVideos');
             }
           }}
-          selectedChannelId={selectedChannelTag}
           viewState={viewState}
           updateViewState={updateViewState}
         />

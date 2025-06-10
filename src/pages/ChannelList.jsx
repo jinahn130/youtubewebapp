@@ -11,7 +11,6 @@ function formatSubs(count) {
 function ChannelList({
   channels = [],
   onSelectChannel,
-  selectedChannelId,
   viewState = {},
   updateViewState = () => {},
 }) {
@@ -23,20 +22,14 @@ function ChannelList({
 
   const [sortBy, setSortBy] = useState(viewState.sortBy ?? 'subscriber_count');
   const [query, setQuery] = useState(viewState.query ?? '');
-  const [clickedChannel, setClickedChannel] = useState(viewState.clickedChannel ?? selectedChannelId ?? null);
 
+  const clickedChannel = viewState.clickedChannel ?? null;
   const isMobile = window.innerWidth < 768;
   const hoverTimeout = useRef(null);
 
   useEffect(() => {
-    updateViewState({ sortBy, query, clickedChannel });
-  }, [sortBy, query, clickedChannel]);
-
-  useEffect(() => {
-    if (selectedChannelId && selectedChannelId !== clickedChannel) {
-      setClickedChannel(selectedChannelId);
-    }
-  }, [selectedChannelId]);
+    updateViewState({ sortBy, query });
+  }, [sortBy, query]);
 
   const sortedChannels = [...channels]
     .filter((ch) => {
@@ -97,8 +90,11 @@ function ChannelList({
             key={channel.channel_tag}
             ref={ref}
             onClick={() => {
-              setClickedChannel(channel.channel_tag);
-              onSelectChannel(channel.channel_tag);
+              updateViewState({
+                clickedChannel: channel.channel_tag,
+                channelTag: channel.channel_tag,
+              });
+              onSelectChannel?.(channel.channel_tag); // optional, will do nothing if not passed
             }}
             className="d-flex align-items-center gap-3 p-2 mb-2 rounded border"
             style={{
