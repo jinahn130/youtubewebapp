@@ -174,11 +174,13 @@ function MobileLayout({
                 ← Back
               </button>
             </div>
-            <MVideoSummary
-              videoId={selectedVideoId}
-              summaryData={videoSummaryData}
-              containerRef={containerRefs.current[refKey]}
-            />
+              <MVideoSummary
+                videoId={selectedVideoId}
+                summaryData={videoSummaryData}
+                containerRef={containerRefs.current[refKey]}
+                viewState={entry.state}
+                updateViewState={updateViewState}
+              />
           </>
         );
         break;

@@ -1,33 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { marked } from 'marked';
 
-function MVideoSummary({ videoId, summaryData, containerRef: externalRef }) {
+function MVideoSummary({ videoId, summaryData, containerRef: externalRef, viewState = {}, updateViewState = () => {} }) {
+
   const [fontFamily, setFontFamily] = useState('system-ui');
   const [fontSize, setFontSize] = useState('0.9rem');
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [sizeMenuOpen, setSizeMenuOpen] = useState(false);
+  const hasRestoredRef = useRef(false);
 
   const localRef = useRef(null);
-  const scrollRef = useRef(0);
   const containerRef = externalRef || localRef;
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' });
     const container = containerRef?.current;
-    if (container) container.scrollTop = 0;
-  }, [videoId]);
+    if (container && !hasRestoredRef.current && viewState.scrollTop != null) {
+      container.scrollTop = viewState.scrollTop;
+      hasRestoredRef.current = true; // ✅ only restore once
+    }
+  }, [containerRef, viewState.scrollTop]);
 
+
+  // ✅ Track scroll and update viewState
   useEffect(() => {
     const container = containerRef?.current;
     if (!container) return;
-    container.scrollTop = scrollRef.current;
 
     const handleScroll = () => {
-      scrollRef.current = container.scrollTop;
+      updateViewState({ scrollTop: container.scrollTop });
     };
+
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [containerRef]);
+  }, [containerRef, updateViewState]);
 
   if (summaryData === null) {
     return (
