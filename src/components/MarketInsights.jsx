@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BsChevronDown, BsChevronRight } from 'react-icons/bs';
 import FormattedParagraph from './FormattedParagraph';
 
-const CollapsibleCard = ({ title, badge, icon, children, collapsed, setCollapsed, sectionKey, setLastInteractedKey }) => {
+const CollapsibleCard = ({ title, badge, icon, children, collapsed, setCollapsed, sectionKey }) => {
   const isOpen = !collapsed?.[sectionKey];
 
   const toggle = () => {
@@ -11,7 +11,6 @@ const CollapsibleCard = ({ title, badge, icon, children, collapsed, setCollapsed
       ...prev,
       [sectionKey]: !prev?.[sectionKey],
     }));
-    setLastInteractedKey?.(sectionKey);
   };
 
   return (
