@@ -44,43 +44,49 @@ function Sidebar({ setView, currentView, collapsed, toggleCollapse }) {
 
       {/* Navigation Links */}
       <ul className="nav flex-column">
-        {navItems.map((item) => (
-          <li key={item.view} className="nav-item">
-            <a
-              href="#"
-              className="nav-link d-flex align-items-center gap-2 px-3 py-2"
-              onClick={(e) => {
-                e.preventDefault();
-                setView(item.view);
-              }}
-              title={collapsed ? item.label : ''}
-              style={{
-                color: currentView === item.view ? '#0d6efd' : '#333',
-                backgroundColor: currentView === item.view ? '#eef6ff' : 'transparent',
-                fontWeight: currentView === item.view ? 600 : 500,
-                borderLeft: currentView === item.view ? '4px solid #0d6efd' : '4px solid transparent',
-                borderRadius: '8px',
-                transition: 'background-color 0.2s ease',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              onMouseEnter={(e) => {
-                if (currentView !== item.view) {
-                  e.currentTarget.style.backgroundColor = '#f1f1f1';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentView !== item.view) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <span>{item.icon}</span>
-              {!collapsed && <span>{item.label}</span>}
-            </a>
-          </li>
-        ))}
+        {navItems.map((item) => {
+          const isActive = item.view === 'channel'
+            ? ['channel', 'channelVideos'].includes(currentView)
+            : currentView === item.view;
+
+          return (
+            <li key={item.view} className="nav-item">
+              <a
+                href="#"
+                className="nav-link d-flex align-items-center gap-2 px-3 py-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setView(item.view);
+                }}
+                title={collapsed ? item.label : ''}
+                style={{
+                  color: isActive ? '#0d6efd' : '#333',
+                  backgroundColor: isActive ? '#eef6ff' : 'transparent',
+                  fontWeight: isActive ? 600 : 500,
+                  borderLeft: isActive ? '4px solid #0d6efd' : '4px solid transparent',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.2s ease',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#f1f1f1';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <span>{item.icon}</span>
+                {!collapsed && <span>{item.label}</span>}
+              </a>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Footer Logo */}

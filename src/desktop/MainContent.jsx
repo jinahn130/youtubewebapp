@@ -17,15 +17,28 @@ function MainContent({
   scrollRefs,
   scrollStack,
   updateViewScroll,
+  viewState,
+  updateViewState,
   isMobile
 }) {
-  const [selectedChannelTag, setSelectedChannelTag] = useState(null);
+
+  //used for knowing if channel has been selected so we can render ChannelVideo (remembers between nav toggles too)
+  const selectedChannelTag = viewState.channelTag || null;
 
   useEffect(() => {
     const el = scrollRefs.current[view];
-    if (el && scrollStack[view]?.scrollTop != null) {
-      el.scrollTop = scrollStack[view].scrollTop;
-    }
+    if (!el || scrollStack[view]?.scrollTop == null) return;
+
+    const tryRestoreScroll = () => {
+      if (el.scrollHeight > el.clientHeight + scrollStack[view].scrollTop) {
+        el.scrollTop = scrollStack[view].scrollTop;
+      } else {
+        // Retry after slight delay if DOM hasn't rendered tall enough yet
+        setTimeout(tryRestoreScroll, 30);
+      }
+    };
+
+    tryRestoreScroll();
   }, [view]);
 
   let content;
@@ -38,6 +51,8 @@ function MainContent({
           channelList={channelList}
           preloadedVideos={recentVideos}
           selectedVideoId={selectedVideoId}
+          viewState={viewState}
+          updateViewState={updateViewState}
         />
       );
       break;
@@ -46,6 +61,8 @@ function MainContent({
       content = (
         <ExtractView
           onVideoClick={setSelectedVideoId}
+          viewState={viewState}
+          updateViewState={updateViewState}
         />
       );
       break;
@@ -55,14 +72,15 @@ function MainContent({
         <ChannelList
           channels={channelList}
           onSelectChannel={(channelTag) => {
-            setSelectedChannelTag(channelTag);
+            updateViewState({ channelTag });
             const match = channelList.find((ch) => ch.channel_tag === channelTag);
             if (match) {
               setChannel(match.channel_id);
               setView('channelVideos');
             }
           }}
-          selectedChannelId={selectedChannelTag}
+          viewState={viewState}
+          updateViewState={updateViewState}
         />
       );
       break;
@@ -91,6 +109,8 @@ function MainContent({
             channelId={selectedChannel}
             onVideoClick={setSelectedVideoId}
             selectedVideoId={selectedVideoId}
+            viewState={viewState}
+            updateViewState={updateViewState}
           />
         </>
       );
@@ -108,6 +128,13 @@ function MainContent({
       content = <div className="p-3">Welcome to the app!</div>;
   }
   return (
+    /*
+      This div tag is shared for all views. But that does not guarantee the actual DOM node remains the same between view changes.
+      React often tears down and re-creates the DOM node — even if the tag looks identical in code.
+      That means:
+      The DOM node for 'recent' is different from 'channel' even though it came from the same JSX line.
+      Therefore, we can’t assume scrollRefs.current['recent'] === scrollRefs.current['channel'].
+    */
     <div
       ref={(ref) => {
         if (ref) scrollRefs.current[view] = ref;

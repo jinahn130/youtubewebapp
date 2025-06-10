@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BsChevronDown, BsChevronRight } from 'react-icons/bs';
 import FormattedParagraph from './FormattedParagraph';
 
-const CollapsibleCard = ({ title, badge, icon, children }) => {
-  const [open, setOpen] = useState(false);
+const CollapsibleCard = ({ title, badge, icon, children, collapsed, setCollapsed, sectionKey }) => {
+  const isOpen = !collapsed?.[sectionKey];
+
+  const toggle = () => {
+    setCollapsed?.((prev) => ({
+      ...prev,
+      [sectionKey]: !prev?.[sectionKey],
+    }));
+  };
+
   return (
     <div style={{
       borderRadius: '16px',
@@ -14,7 +22,7 @@ const CollapsibleCard = ({ title, badge, icon, children }) => {
       overflow: 'hidden',
     }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={toggle}
         style={{
           background: 'none',
           border: 'none',
@@ -44,12 +52,12 @@ const CollapsibleCard = ({ title, badge, icon, children }) => {
           )}
         </div>
         <span style={{ marginLeft: '0.5rem' }}>
-          {open ? <BsChevronDown /> : <BsChevronRight />}
+          {isOpen ? <BsChevronDown /> : <BsChevronRight />}
         </span>
       </button>
 
       <AnimatePresence initial={false}>
-        {open && (
+        {isOpen && (
           <motion.div
             key="content"
             initial={{ height: 0, opacity: 0 }}
@@ -76,7 +84,7 @@ const CollapsibleCard = ({ title, badge, icon, children }) => {
   );
 };
 
-const MarketInsights = ({ data, onVideoClick, videoMetadata = [] }) => {
+const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, setCollapsed, lastInteractedKey, setLastInteractedKey }) => {
   const textStyle = { fontSize: '0.88rem', color: '#555' };
 
   return (
@@ -86,131 +94,138 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [] }) => {
       lineHeight: 1.5,
     }}>
       {data.count && (
-        <div style={{
-          fontSize: '0.82rem',
-          color: '#666',
-          marginBottom: '0.5rem',
-          marginTop: '0.25rem',
-        }}>
+        <div style={{ fontSize: '0.82rem', color: '#666', marginBottom: '0.5rem', marginTop: '0.25rem' }}>
           This extract was aggregated from {data.count} YouTube videos
         </div>
       )}
 
-      <h5 style={{ margin: '1.25rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>
-        📊 Theme, Ideas & Analysis
-      </h5>
-      {data.theme_idea_analysis.map((t, idx) => (
-        <CollapsibleCard
-          key={idx}
-          title={t.theme.join(' / ')}
-          icon={<span role="img" aria-label="theme">📁</span>}
-        >
-          <div>
-            <strong style={textStyle}>Ideas:</strong>
-            <ul style={{ paddingLeft: '1.25rem' }}>
-              {t.ideas.map((i, j) => (
-                <li key={j}>
-                  <FormattedParagraph
-                    text={i.idea}
-                    onVideoClick={onVideoClick}
-                    videoMetadata={videoMetadata}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {Array.isArray(t.stock_mentions) && t.stock_mentions.length > 0 && (
+      <h5 style={{ margin: '1.25rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>📊 Theme, Ideas & Analysis</h5>
+      {data.theme_idea_analysis.map((t, idx) => {
+        const sectionKey = `theme_${idx}`;
+        return (
+          <CollapsibleCard
+            key={sectionKey}
+            sectionKey={sectionKey}
+            title={t.theme.join(' / ')}
+            icon={<span role="img" aria-label="theme">📁</span>}
+            collapsed={collapsed}
+            setCollapsed={setCollapsed}
+            setLastInteractedKey={setLastInteractedKey}
+          >
             <div>
-              <strong style={textStyle}>Stock Mentions:</strong>
+              <strong style={textStyle}>Ideas:</strong>
               <ul style={{ paddingLeft: '1.25rem' }}>
-                {t.stock_mentions.map((s, i) => (
-                  <li key={i}>
-                    <strong>{s.ticker}</strong> – {s.sentiment}
-                    <div style={{ fontSize: '0.85rem', color: '#555' }}>
+                {t.ideas.map((i, j) => (
+                  <li key={j}>
+                    <FormattedParagraph
+                      text={i.idea}
+                      onVideoClick={onVideoClick}
+                      videoMetadata={videoMetadata}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {Array.isArray(t.stock_mentions) && t.stock_mentions.length > 0 && (
+              <div>
+                <strong style={textStyle}>Stock Mentions:</strong>
+                <ul style={{ paddingLeft: '1.25rem' }}>
+                  {t.stock_mentions.map((s, i) => (
+                    <li key={i}>
+                      <strong>{s.ticker}</strong> – {s.sentiment}
+                      <div style={{ fontSize: '0.85rem', color: '#555' }}>
+                        <FormattedParagraph
+                          text={s.reason}
+                          onVideoClick={onVideoClick}
+                          videoMetadata={videoMetadata}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {Array.isArray(t.global_events) && t.global_events.length > 0 && (
+              <div>
+                <strong style={textStyle}>Key Events:</strong>
+                <ul style={{ paddingLeft: '1.25rem' }}>
+                  {t.global_events.map((e, k) => (
+                    <li key={k}>
                       <FormattedParagraph
-                        text={s.reason}
+                        text={e}
                         onVideoClick={onVideoClick}
                         videoMetadata={videoMetadata}
                       />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {Array.isArray(t.global_events) && t.global_events.length > 0 && (
-            <div>
-              <strong style={textStyle}>Key Events:</strong>
-              <ul style={{ paddingLeft: '1.25rem' }}>
-                {t.global_events.map((e, k) => (
-                  <li key={k}>
-                    <FormattedParagraph
-                      text={e}
-                      onVideoClick={onVideoClick}
-                      videoMetadata={videoMetadata}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {t.market_sentiment && t.market_sentiment.trim() !== '' && (
+              <div style={{
+                fontSize: '0.80rem',
+                color: '#888',
+                fontStyle: 'italic',
+                paddingLeft: '0.25rem',
+                paddingTop: '0.1rem',
+                paddingBottom: '1.25rem',
+                lineHeight: '1.6',
+              }}>
+                Overall Sentiment: {t.market_sentiment}
+              </div>
+            )}
+          </CollapsibleCard>
+        );
+      })}
 
-          {t.market_sentiment && t.market_sentiment.trim() !== '' && (
-            <div style={{
-              fontSize: '0.80rem',
-              color: '#888',
-              fontStyle: 'italic',
-              paddingLeft: '0.25rem',
-              paddingTop: '0.1rem',
-              paddingBottom: '1.25rem',
-              lineHeight: '1.6',
-            }}>
-              Overall Sentiment: {t.market_sentiment}
-            </div>
-          )}
-        </CollapsibleCard>
-      ))}
+      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>📌 Frequently Mentioned Stocks</h5>
+      {data.frequently_mentioned_stocks.map((s, idx) => {
+        const sectionKey = `freq_${idx}`;
+        return (
+          <CollapsibleCard
+            key={sectionKey}
+            sectionKey={sectionKey}
+            title={s.ticker}
+            icon={<span role="img" aria-label="stock">📈</span>}
+            badge={`Mentions: ${s.mentions}`}
+            collapsed={collapsed}
+            setCollapsed={setCollapsed}
+            setLastInteractedKey={setLastInteractedKey}
+          >
+            {s.arguments.map((a, i) => (
+              <div key={i}>
+                <strong style={textStyle}>{a.youtuber}</strong>
+                <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
+                  {a.argument.map((text, j) => (
+                    <li key={j}>
+                      <FormattedParagraph
+                        text={text}
+                        onVideoClick={onVideoClick}
+                        videoMetadata={videoMetadata}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </CollapsibleCard>
+        );
+      })}
 
-      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>
-        📌 Frequently Mentioned Stocks
-      </h5>
-      {data.frequently_mentioned_stocks.map((s, idx) => (
-        <CollapsibleCard
-          key={idx}
-          title={s.ticker}
-          icon={<span role="img" aria-label="stock">📈</span>}
-          badge={`Mentions: ${s.mentions}`}
-        >
-          {s.arguments.map((a, i) => (
-            <div key={i}>
-              <strong style={textStyle}>{a.youtuber}</strong>
-              <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
-                {a.argument.map((text, j) => (
-                  <li key={j}>
-                    <FormattedParagraph
-                      text={text}
-                      onVideoClick={onVideoClick}
-                      videoMetadata={videoMetadata}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </CollapsibleCard>
-      ))}
-
-      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>
-        ✅ Top Recommended Stocks
-      </h5>
+      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>✅ Top Recommended Stocks</h5>
       {data.top_recommended_stocks.map((rec, idx) => (
         <CollapsibleCard
-          key={idx}
+          key={`rec_${idx}`}
+          sectionKey={`rec_${idx}`}
           title={rec.ticker}
           icon={<span role="img" aria-label="recommend">💡</span>}
           badge={`${rec.action.toUpperCase()} (${rec.confidence})`}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          setLastInteractedKey={setLastInteractedKey}
         >
           <ul style={{ paddingLeft: '1.25rem' }}>
             <li>
@@ -224,14 +239,16 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [] }) => {
         </CollapsibleCard>
       ))}
 
-      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>
-        🗓 Most Anticipated Events
-      </h5>
+      <h5 style={{ margin: '1.75rem 0 0.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#333' }}>🗓 Most Anticipated Events</h5>
       {data.most_anticipated_events.map((e, idx) => (
         <CollapsibleCard
-          key={idx}
+          key={`event_${idx}`}
+          sectionKey={`event_${idx}`}
           title={e.event}
           icon={<span role="img" aria-label="event">🗓</span>}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          setLastInteractedKey={setLastInteractedKey}
         >
           {e.impact && e.impact.trim() !== '' && (
             <div>

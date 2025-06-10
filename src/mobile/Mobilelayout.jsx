@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react';
 import MobileHeader from './MobileHeader';
 import MobileSidebar from './MobileSidebar';
 import MobileNavigator from './MobileNavigator';
-import RecentVideos from '../pages/RecentVideos';
-import ExtractView from '../pages/ExtractView';
-import ChannelList from '../pages/ChannelList';
-import ChannelVideos from '../pages/ChannelVideos';
-import VideoSummary from '../components/VideoSummary';
+import MRecentVideos from './pages/MRecentVideos';
+import MExtractView from './pages/MExtractView';
+import MChannelList from './pages/MChannelList';
+import MChannelVideos from './pages/MChannelVideos';
+import MVideoSummary from './components/MVideoSummary';
 import About from '../pages/About';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 
@@ -102,7 +102,7 @@ function MobileLayout({
     switch (entry.key) {
       case 'recent':
         content = (
-          <RecentVideos
+          <MRecentVideos
             {...commonProps}
             onVideoClick={handleVideoClick}
             channelList={channelList}
@@ -113,7 +113,7 @@ function MobileLayout({
         break;
       case 'extract':
         content = (
-          <ExtractView
+          <MExtractView
             {...commonProps}
             onVideoClick={handleVideoClick}
           />
@@ -121,7 +121,7 @@ function MobileLayout({
         break;
       case 'channel':
         content = (
-          <ChannelList
+          <MChannelList
             {...commonProps}
             channels={channelList}
             selectedChannelId={entry.state.channelId}
@@ -145,7 +145,7 @@ function MobileLayout({
                 ← Back to Channels
               </button>
             </div>
-            <ChannelVideos
+            <MChannelVideos
               {...commonProps}
               channelId={entry.state.channelId}
               selectedVideoId={selectedVideoId}
@@ -174,7 +174,7 @@ function MobileLayout({
                 ← Back
               </button>
             </div>
-            <VideoSummary
+            <MVideoSummary
               videoId={selectedVideoId}
               summaryData={videoSummaryData}
               containerRef={containerRefs.current[refKey]}
@@ -185,7 +185,6 @@ function MobileLayout({
       case 'about':
         content = (
           <div className="p-3" style={{ flex: 1, overflowY: 'auto' }}>
-            <h5>About DigestJutsu</h5>
             <About />
           </div>
         );

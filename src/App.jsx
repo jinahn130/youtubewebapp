@@ -52,11 +52,7 @@ function matchMobile(win) {
 
 function App() {
   const isMobile = useIsMobile();
-  const [view, setView] = useState(() => {
-    const stored = localStorage.getItem('activeView');
-    const validViews = ['recent', 'extract', 'channel', 'channelVideos'];
-    return validViews.includes(stored) ? stored : 'recent';
-  });
+
 
   const [selectedVideoId, setSelectedVideoId] = useState(null);
   const [videoSummaryData, setVideoSummaryData] = useState(null);
@@ -76,14 +72,6 @@ function App() {
     const saved = localStorage.getItem('videoSummaryWidth');
     return saved ? parseInt(saved, 10) : 400;
   });
-
-  const handleViewChange = (newView) => {
-    if (newView === 'channel') {
-      setChannel(null);
-    }
-    localStorage.setItem('activeView', newView);
-    setView(newView);
-  };
 
   useEffect(() => {
     async function fetchChannelList() {
@@ -164,8 +152,6 @@ function App() {
     return (
       <div className="safe-swipe-wrapper">
         <MobileLayout
-          view={view}
-          setView={handleViewChange}
           onVideoSelect={handleVideoSelect}
           selectedVideoId={selectedVideoId}
           videoSummaryData={videoSummaryData}
@@ -180,8 +166,6 @@ function App() {
 
   return (
     <DesktopLayout
-      view={view}
-      setView={handleViewChange}
       onVideoSelect={handleVideoSelect}
       selectedVideoId={selectedVideoId}
       videoSummaryData={videoSummaryData}

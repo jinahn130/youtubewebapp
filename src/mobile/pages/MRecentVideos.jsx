@@ -8,7 +8,7 @@ function formatSubs(n) {
   return n.toString();
 }
 
-function RecentVideos({
+function MRecentVideos({
   onVideoClick,
   channelList = [],
   preloadedVideos = [],
@@ -133,4 +133,4 @@ function RecentVideos({
   );
 }
 
-export default RecentVideos;
+export default MRecentVideos;
