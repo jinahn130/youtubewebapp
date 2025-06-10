@@ -185,7 +185,6 @@ function MobileLayout({
       case 'about':
         content = (
           <div className="p-3" style={{ flex: 1, overflowY: 'auto' }}>
-            <h5>About DigestJutsu</h5>
             <About />
           </div>
         );

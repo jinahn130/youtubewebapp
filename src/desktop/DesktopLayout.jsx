@@ -20,7 +20,6 @@ function DesktopLayout({
   startResizing,
   isMobile,
 }) {
-
   const [view, setView] = useState(() => {
     const stored = localStorage.getItem('activeView');
     const validViews = ['recent', 'extract', 'channel', 'channelVideos'];
@@ -28,6 +27,7 @@ function DesktopLayout({
   });
 
   const [viewStates, setViewStates] = useState({});
+  const [lastChannelView, setLastChannelView] = useState('channel'); // Track last channel-related subview
 
   const updateViewState = (partial, v = view) => {
     setViewStates((prev) => ({
@@ -38,7 +38,7 @@ function DesktopLayout({
 
   const viewState = viewStates[view] || {};
 
-  const scrollRefs = useRef({});       // ✅ per-view scroll container refs
+  const scrollRefs = useRef({});
   const [scrollStack, setScrollStack] = useState({});
 
   const updateViewScroll = (scrollTop, v = view) => {
@@ -51,6 +51,13 @@ function DesktopLayout({
   useEffect(() => {
     localStorage.setItem('activeView', view);
   }, [view]);
+
+  const wrappedSetView = (nextView) => {
+    if (['channel', 'channelVideos'].includes(nextView)) {
+      setLastChannelView(nextView);
+    }
+    setView(nextView);
+  };
 
   return (
     <div
@@ -75,10 +82,16 @@ function DesktopLayout({
         }}
       >
         <Sidebar
+          currentView={view}
+          setView={(nextView) => {
+            if (nextView === 'channel') {
+              wrappedSetView(lastChannelView); // Restore last subview
+            } else {
+              wrappedSetView(nextView);
+            }
+          }}
           collapsed={sidebarCollapsed}
           toggleCollapse={toggleSidebar}
-          currentView={view}
-          setView={setView}
         />
       </div>
 
@@ -94,17 +107,17 @@ function DesktopLayout({
       >
         <MainContent
           view={view}
-          setView={setView}
+          setView={wrappedSetView}
           selectedVideoId={selectedVideoId}
           setSelectedVideoId={onVideoSelect}
           setChannel={(channelId) => {
             setChannel((prev) => {
               if (prev !== channelId) {
-                setView('channelVideos');
+                wrappedSetView('channelVideos');
                 return channelId;
               } else {
                 setView('');
-                setTimeout(() => setView('channelVideos'), 0);
+                setTimeout(() => wrappedSetView('channelVideos'), 0);
                 return prev;
               }
             });
@@ -153,6 +166,22 @@ function DesktopLayout({
           videoId={selectedVideoId}
           summaryData={videoSummaryData}
           containerRef={containerRef}
+          onYoutuberClick={(channelId) => {
+            const match = channelList.find((ch) => ch.channel_id === channelId);
+            if (match) {
+              setViewStates((prev) => ({
+                ...prev,
+                channel: {
+                  ...prev.channel,
+                  channelTag: match.channel_tag,
+                  clickedChannel: match.channel_tag,
+                }
+              }));
+              setChannel(channelId);
+              wrappedSetView('channelVideos');
+            }
+          }}
+          channelList={channelList}
         />
       </aside>
     </div>
