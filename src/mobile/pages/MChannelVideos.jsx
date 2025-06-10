@@ -5,7 +5,6 @@ function MChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = 
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState(viewState.sortBy || 'published_at');
-  const listRef = useRef(null);
 
   useEffect(() => {
     if (!channelId) return;
@@ -27,16 +26,8 @@ function MChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = 
   }, [channelId]);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (el && viewState.scrollTop != null) {
-      el.scrollTop = viewState.scrollTop;
-    }
-    return () => {
-      if (el) {
-        updateViewState({ scrollTop: el.scrollTop, sortBy });
-      }
-    };
-  }, []);
+    updateViewState({ sortBy });
+  }, [sortBy]);
 
   const sortedVideos = [...videos].sort((a, b) => {
     if (sortBy === 'published_at') {
@@ -46,12 +37,12 @@ function MChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = 
   });
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }} ref={listRef}>
-      <div className="d-flex justify-content-between align-items-center p-3">
+    <div style={{ padding: '0.75rem' }}>
+      <div className="d-flex justify-content-between align-items-center mb-2">
         <h5 className="mb-0">Channel Videos</h5>
       </div>
 
-      <div className="px-3 mb-3">
+      <div className="mb-3">
         <label htmlFor="sort" className="form-label me-2">
           Sort by:
         </label>
@@ -66,12 +57,12 @@ function MChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = 
         </select>
       </div>
 
-      {loading && <div className="px-3">Loading videos...</div>}
+      {loading && <div>Loading videos...</div>}
       {!loading && sortedVideos.length === 0 && (
-        <div className="px-3">No videos found for this channel.</div>
+        <div>No videos found for this channel.</div>
       )}
 
-      <div className="px-3 pb-3">
+      <div>
         {!loading &&
           sortedVideos.map((vid) => {
             const isSelected = selectedVideoId === vid.video_id;

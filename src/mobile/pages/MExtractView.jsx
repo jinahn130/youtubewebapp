@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MarketInsights from '../components/MMarketInsights';
 
+
 const formatDate = (date) => date.toISOString().slice(0, 10);
 
 const getLast30WeekdaysUpToCutoff = () => {
@@ -31,28 +32,12 @@ const getLast30WeekdaysUpToCutoff = () => {
   return dates;
 };
 
-function MExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} }) {
-  const containerRef = useRef(null);
+function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} }) {
   const dates = getLast30WeekdaysUpToCutoff();
   const [selectedDate, setSelectedDate] = useState(viewState.selectedDate || dates[0]);
   const [dailyExtract, setDailyExtract] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (el && viewState.scrollTop != null) {
-      el.scrollTop = viewState.scrollTop;
-    }
-    return () => {
-      if (el) {
-        updateViewState({
-          scrollTop: el.scrollTop,
-          selectedDate,
-        });
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const fetchExtract = async () => {
@@ -72,9 +57,12 @@ function MExtractView({ onVideoClick, viewState = {}, updateViewState = () => {}
     fetchExtract();
   }, [selectedDate]);
 
+  useEffect(() => {
+    updateViewState({ selectedDate });
+  }, [selectedDate]);
+
   return (
     <div
-      ref={containerRef}
       style={{
         flex: 1,
         overflowY: 'auto',
@@ -127,4 +115,4 @@ function MExtractView({ onVideoClick, viewState = {}, updateViewState = () => {}
   );
 }
 
-export default MExtractView;
+export default ExtractView;

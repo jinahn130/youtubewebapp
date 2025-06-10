@@ -1,11 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import MainContent from './MainContent';
 import VideoSummary from '../components/VideoSummary';
 
 function DesktopLayout({
-  view,
-  setView,
   onVideoSelect,
   selectedVideoId,
   videoSummaryData,
@@ -23,15 +21,36 @@ function DesktopLayout({
   isMobile,
 }) {
 
+  const [view, setView] = useState(() => {
+    const stored = localStorage.getItem('activeView');
+    const validViews = ['recent', 'extract', 'channel', 'channelVideos'];
+    return validViews.includes(stored) ? stored : 'recent';
+  });
+
+  const [viewStates, setViewStates] = useState({});
+
+  const updateViewState = (partial, v = view) => {
+    setViewStates((prev) => ({
+      ...prev,
+      [v]: { ...prev[v], ...partial },
+    }));
+  };
+
+  const viewState = viewStates[view] || {};
+
   const scrollRefs = useRef({});       // ✅ per-view scroll container refs
   const [scrollStack, setScrollStack] = useState({});
 
-  const updateViewScroll = (scrollTop) => {
+  const updateViewScroll = (scrollTop, v = view) => {
     setScrollStack((prev) => ({
       ...prev,
-      [view]: { ...prev[view], scrollTop },
+      [v]: { ...prev[v], scrollTop },
     }));
   };
+
+  useEffect(() => {
+    localStorage.setItem('activeView', view);
+  }, [view]);
 
   return (
     <div
@@ -97,6 +116,8 @@ function DesktopLayout({
           scrollStack={scrollStack}
           updateViewScroll={updateViewScroll}
           isMobile={false}
+          viewState={viewState}
+          updateViewState={updateViewState}
         />
       </div>
 

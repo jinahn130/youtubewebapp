@@ -34,11 +34,46 @@ const getLast30WeekdaysUpToCutoff = () => {
 function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} }) {
   const dates = getLast30WeekdaysUpToCutoff();
   const [selectedDate, setSelectedDate] = useState(viewState.selectedDate || dates[0]);
-  const [dailyExtract, setDailyExtract] = useState(null);
+  const [dailyExtract, setDailyExtract] = useState(viewState.dailyExtract || null);
+
+  //initially collapsed states are false
+  const generateCollapsedMap = (data) => {
+    if (!data) return {};
+    const collapsedState = {};
+
+    data.theme_idea_analysis?.forEach((_, idx) => {
+      collapsedState[`theme_${idx}`] = true;
+    });
+
+    data.frequently_mentioned_stocks?.forEach((_, idx) => {
+      collapsedState[`freq_${idx}`] = true;
+    });
+
+    data.top_recommended_stocks?.forEach((_, idx) => {
+      collapsedState[`rec_${idx}`] = true;
+    });
+
+    data.most_anticipated_events?.forEach((_, idx) => {
+      collapsedState[`event_${idx}`] = true;
+    });
+
+    return collapsedState;
+  };
+  
+  const [collapsed, setCollapsed] = useState(viewState.collapsed || generateCollapsedMap(viewState.dailyExtract));
+
+  const [lastInteractedKey, setLastInteractedKey] = useState(viewState.lastInteractedKey || null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const alreadyCached = viewState.dailyExtract && viewState.selectedDate === selectedDate;
+    if (alreadyCached) {
+      setDailyExtract(viewState.dailyExtract);
+      return;
+    }
+
     const fetchExtract = async () => {
       setLoading(true);
       setError(null);
@@ -46,6 +81,12 @@ function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} 
         const res = await fetch(`https://digestjutsu.com/GetDigest?digest_date=${selectedDate}`);
         const json = await res.json();
         setDailyExtract(json);
+
+        // 🧠 Initialize collapsed sections only if not already in viewState
+        if (!viewState.collapsed) {
+          const defaultCollapsed = generateCollapsedMap(json);
+          setCollapsed(defaultCollapsed);
+        }
       } catch (err) {
         setError('Insights unavailable for this date :(');
         setDailyExtract(null);
@@ -53,12 +94,14 @@ function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} 
         setLoading(false);
       }
     };
+
     fetchExtract();
   }, [selectedDate]);
 
-  useEffect(() => {
-    updateViewState({ selectedDate });
-  }, [selectedDate]);
+  useEffect(() => updateViewState({ selectedDate }), [selectedDate]);
+  useEffect(() => updateViewState({ dailyExtract }), [dailyExtract]);
+  useEffect(() => updateViewState({ collapsed }), [collapsed]);
+  useEffect(() => updateViewState({ lastInteractedKey }), [lastInteractedKey]);
 
   return (
     <div
@@ -108,6 +151,10 @@ function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} 
           data={dailyExtract}
           onVideoClick={onVideoClick}
           videoMetadata={dailyExtract.video_metadata || []}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+          lastInteractedKey={lastInteractedKey}
+          setLastInteractedKey={setLastInteractedKey}
         />
       )}
     </div>
