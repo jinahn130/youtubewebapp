@@ -21,7 +21,9 @@ function MainContent({
   updateViewState,
   isMobile
 }) {
-  const [selectedChannelTag, setSelectedChannelTag] = useState(null);
+
+  //used for knowing if channel has been selected so we can render ChannelVideo (remembers between nav toggles too)
+  const selectedChannelTag = viewState.channelTag || null;
 
   useEffect(() => {
     const el = scrollRefs.current[view];
@@ -70,7 +72,7 @@ function MainContent({
         <ChannelList
           channels={channelList}
           onSelectChannel={(channelTag) => {
-            setSelectedChannelTag(channelTag);
+            updateViewState({ channelTag });
             const match = channelList.find((ch) => ch.channel_tag === channelTag);
             if (match) {
               setChannel(match.channel_id);
