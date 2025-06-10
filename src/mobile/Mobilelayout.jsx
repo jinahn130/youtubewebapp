@@ -17,38 +17,64 @@ function MobileLayout({
   channelList,
   recentVideos,
 }) {
-  const [viewStack, setViewStack] = useState([{ key: 'recent', state: {} }]);
+
+
+  const [currentRoot, setCurrentRoot] = useState('recent');
+  const [stackMap, setStackMap] = useState({
+    recent: [{ key: 'recent', state: {} }],
+    channel: [{ key: 'channel', state: {} }],
+    extract: [{ key: 'extract', state: {} }],
+    about: [{ key: 'about', state: {} }],
+  });
+
+  const getViewStack = () => {
+    return Array.isArray(stackMap[currentRoot])
+      ? stackMap[currentRoot]
+      : [{ key: currentRoot, state: {} }];
+  };
+  const setViewStack = (newStack) => {
+    setStackMap((prev) => ({
+      ...prev,
+      [currentRoot]: newStack,
+    }));
+  };
+
   const [poppedStack, setPoppedStack] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const containerRefs = useRef({});
   const touchStartX = useRef(null);
   const [touchDeltaX, setTouchDeltaX] = useState(0);
 
+  const viewStack = getViewStack();
   const current = viewStack[viewStack.length - 1];
 
   const pushView = (key, state = {}) => {
+    const currentStack = getViewStack();
+    const top = currentStack[currentStack.length - 1];
+    if (top.key === key && JSON.stringify(top.state) === JSON.stringify(state)) return;
     setPoppedStack([]);
-    setViewStack((prev) => [...prev, { key, state }]);
+    setViewStack([...currentStack, { key, state }]);
   };
 
   const popView = () => {
-    if (viewStack.length > 1) {
-      const popped = viewStack[viewStack.length - 1];
-      setViewStack((prev) => prev.slice(0, -1));
+    const prevStack = getViewStack();
+    if (prevStack.length > 1) {
+      const popped = prevStack[prevStack.length - 1];
+      setViewStack(prevStack.slice(0, -1));
       setPoppedStack((prev) => [...prev, popped]);
     }
   };
 
   const updateViewState = (partial) => {
-    setViewStack((prev) => {
-      const updated = [...prev];
-      updated[updated.length - 1].state = {
-        ...updated[updated.length - 1].state,
-        ...partial,
-      };
-      return updated;
-    });
+    const prevStack = getViewStack();
+    const updated = [...prevStack];
+    updated[updated.length - 1].state = {
+      ...updated[updated.length - 1].state,
+      ...partial,
+    };
+    setViewStack(updated);
   };
+
 
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
@@ -65,9 +91,17 @@ function MobileLayout({
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     if (dx > 140 && viewStack.length > 1) {
-      const popped = viewStack[viewStack.length - 1];
-      setViewStack((prev) => prev.slice(0, -1));
-      setPoppedStack((prev) => [...prev, popped]);
+      const currentStack = getViewStack();
+      if (dx > 140 && currentStack.length > 1) {
+        const popped = currentStack[currentStack.length - 1];
+        const newStack = currentStack.slice(0, -1);
+        setViewStack(newStack);
+        setPoppedStack((prev) => [...prev, popped]);
+      } else if (dx < -140 && poppedStack.length > 0) {
+        const forward = poppedStack[poppedStack.length - 1];
+        setPoppedStack((prev) => prev.slice(0, -1));
+        setViewStack([...currentStack, forward]);
+      }
     } else if (dx < -140 && poppedStack.length > 0) {
       const forward = poppedStack[poppedStack.length - 1];
       setPoppedStack((prev) => prev.slice(0, -1));
@@ -84,7 +118,18 @@ function MobileLayout({
 
   const handleSelectView = (viewKey) => {
     setPoppedStack([]);
-    setViewStack([{ key: viewKey, state: {} }]);
+
+    setStackMap((prev) => {
+      if (!prev[viewKey]) {
+        return {
+          ...prev,
+          [viewKey]: [{ key: viewKey, state: {} }],
+        };
+      }
+      return prev;
+    });
+
+    setCurrentRoot(viewKey);
   };
 
   const renderView = (entry, index) => {
