@@ -6,7 +6,7 @@ import MRecentVideos from './pages/MRecentVideos';
 import MExtractView from './pages/MExtractView';
 import MChannelList from './pages/MChannelList';
 import MChannelVideos from './pages/MChannelVideos';
-import VideoSummary from '../components/VideoSummary';
+import MVideoSummary from './components/MVideoSummary';
 import About from '../pages/About';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 
@@ -174,7 +174,7 @@ function MobileLayout({
                 ← Back
               </button>
             </div>
-            <VideoSummary
+            <MVideoSummary
               videoId={selectedVideoId}
               summaryData={videoSummaryData}
               containerRef={containerRefs.current[refKey]}

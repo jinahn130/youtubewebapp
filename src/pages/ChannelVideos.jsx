@@ -36,8 +36,22 @@ function ChannelVideos({ channelId, onVideoClick, selectedVideoId, viewState = {
     return a.title.localeCompare(b.title);
   });
 
+  //minHeight is necessary because
+  /*
+  You're saving scroll position via onScroll in MainContent.jsx for the current view (view).
+
+  When you switch from 'channel' to 'channelVideos', the new view (channelVideos) mounts.
+
+  Because channelVideos is too short to scroll, the scroll container fires onScroll with scrollTop = 0.
+
+  MainContent now saves that scrollTop = 0 into the shared scrollStack['channelVideos'].
+
+  The next time you go back to 'channel', MainContent sees scrollStack['channel']?.scrollTop === undefined, so it defaults to 0.
+
+  Thus, ChannelList doesn’t restore scroll — it scrolls to top.
+  */
   return (
-    <div style={{ padding: '0.75rem' }}>
+    <div style={{ padding: '0.75rem', minHeight: '100vh' }}>
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h5 className="mb-0">Channel Videos</h5>
       </div>
