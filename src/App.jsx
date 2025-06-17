@@ -129,7 +129,8 @@ function App() {
       if (!isResizing.current) return;
       const containerRight = containerRef.current?.getBoundingClientRect().right || window.innerWidth;
       const newWidth = containerRight - e.clientX;
-      if (newWidth > 300 && newWidth < 1000) {
+      const maxAllowed = Math.max(3000, window.innerWidth - 300); // or any big number
+      if (newWidth > 300 && newWidth < maxAllowed) {
         setVideoSummaryWidth(newWidth);
         localStorage.setItem('videoSummaryWidth', newWidth);
       }

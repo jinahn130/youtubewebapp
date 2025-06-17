@@ -84,7 +84,10 @@ const FormattedParagraph = ({ text, onVideoClick, videoMetadata = [] }) => {
     return (
       <span
         key={`text-${idx}`}
-        style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+        style={{
+          wordBreak: 'break-word',
+          overflowWrap: 'anywhere',
+        }}
       >
         {part}
       </span>
@@ -92,7 +95,15 @@ const FormattedParagraph = ({ text, onVideoClick, videoMetadata = [] }) => {
   });
 
   return (
-    <span style={{ position: 'relative' }}>
+    <div
+      style={{
+        position: 'relative',
+        wordBreak: 'break-word',
+        overflowWrap: 'anywhere',
+        whiteSpace: 'normal',
+        width: '100%',
+      }}
+    >
       {renderedParts}{' '}
       {uniqueIds.length > 0 && (
         <span
@@ -117,12 +128,12 @@ const FormattedParagraph = ({ text, onVideoClick, videoMetadata = [] }) => {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               isMobile={isMobile}
-              onClose={() => setShowPopover(false)} // ✅ TAP OUTSIDE CLOSE
+              onClose={() => setShowPopover(false)}
             />
           )}
         </span>
       )}
-    </span>
+    </div>
   );
 };
 
