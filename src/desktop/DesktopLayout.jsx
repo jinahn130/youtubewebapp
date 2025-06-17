@@ -152,7 +152,7 @@ function DesktopLayout({
         style={{
           width: `${videoSummaryWidth}px`,
           minWidth: '300px',
-          maxWidth: '1500px',
+          maxWidth: '4000px',
           flexShrink: 0,
           overflowY: 'auto',
           overflowX: 'hidden',
