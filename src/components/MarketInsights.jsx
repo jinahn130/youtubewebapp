@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BsChevronDown, BsChevronRight } from 'react-icons/bs';
 import FormattedParagraph from './FormattedParagraph';
@@ -116,7 +116,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
               <strong style={textStyle}>Ideas:</strong>
               <ul style={{ paddingLeft: '1.25rem' }}>
                 {t.ideas.map((i, j) => (
-                  <li key={j}>
+                  <li key={j} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                     <FormattedParagraph
                       text={i.idea}
                       onVideoClick={onVideoClick}
@@ -132,7 +132,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
                 <strong style={textStyle}>Stock Mentions:</strong>
                 <ul style={{ paddingLeft: '1.25rem' }}>
                   {t.stock_mentions.map((s, i) => (
-                    <li key={i}>
+                    <li key={i} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       <strong>{s.ticker}</strong> – {s.sentiment}
                       <div style={{ fontSize: '0.85rem', color: '#555' }}>
                         <FormattedParagraph
@@ -152,7 +152,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
                 <strong style={textStyle}>Key Events:</strong>
                 <ul style={{ paddingLeft: '1.25rem' }}>
                   {t.global_events.map((e, k) => (
-                    <li key={k}>
+                    <li key={k} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       <FormattedParagraph
                         text={e}
                         onVideoClick={onVideoClick}
@@ -200,7 +200,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
                 <strong style={textStyle}>{a.youtuber}</strong>
                 <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
                   {a.argument.map((text, j) => (
-                    <li key={j}>
+                    <li key={j} style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                       <FormattedParagraph
                         text={text}
                         onVideoClick={onVideoClick}
@@ -228,7 +228,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
           setLastInteractedKey={setLastInteractedKey}
         >
           <ul style={{ paddingLeft: '1.25rem' }}>
-            <li>
+            <li style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               <FormattedParagraph
                 text={rec.reason}
                 onVideoClick={onVideoClick}
@@ -254,7 +254,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
             <div>
               <strong style={textStyle}>Impact</strong>
               <ul style={{ paddingLeft: '1.25rem' }}>
-                <li>{e.impact}</li>
+                <li style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>{e.impact}</li>
               </ul>
             </div>
           )}
@@ -263,7 +263,7 @@ const MarketInsights = ({ data, onVideoClick, videoMetadata = [], collapsed, set
             <div>
               <strong style={textStyle}>Context</strong>
               <ul style={{ paddingLeft: '1.25rem' }}>
-                <li>
+                <li style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                   <FormattedParagraph
                     text={e.context}
                     onVideoClick={onVideoClick}
