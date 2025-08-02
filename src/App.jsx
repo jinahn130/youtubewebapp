@@ -1,39 +1,136 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
-import MainContent from './components/MainContent';
+import DesktopLayout from './desktop/DesktopLayout';
+import MobileLayout from './mobile/MobileLayout';
 import VideoSummary from './components/VideoSummary';
+import './App.css';
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => matchMobile(window));
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(matchMobile(window));
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return isMobile;
+}
+
+function matchMobile(win) {
+  const ua = (win.navigator.userAgent || '').toLowerCase();
+  const width = win.innerWidth;
+  const height = win.innerHeight;
+  const touchCapable = 'ontouchstart' in win || win.navigator.maxTouchPoints > 0;
+
+  const knownMobileKeywords = [
+    'iphone', 'ipad', 'ipod', 'android', 'blackberry', 'mini', 'windows ce',
+    'palm', 'nexus', 'sm-', 'pixel', 'kindle', 'silk', 'mobile', 'tablet',
+    'touch', 'surface', 'playbook', 'opera mini', 'opera mobi', 'fennec',
+    'nintendo', 'bb10', 'meego', 'googlehome', 'nesthub', 'nest hub'
+  ];
+
+  const matchesUA = knownMobileKeywords.some((keyword) => ua.includes(keyword));
+
+  // 👇 Force mobile mode for AdSense/Mediapartners bots
+  const isAdSenseBot = ua.includes('adsense') || ua.includes('googlebot') || ua.includes('mediapartners');
+
+  // Optional: Allow override via URL for debugging
+  const urlOverride = win.location.search.includes('forceMobile=true');
+
+  if (isAdSenseBot || urlOverride) return true;
+  
+  const isSmartDisplay = ua.includes('crkey') || ua.includes('nesthub');
+  const isIpadWithTouch = ua.includes('macintosh') && touchCapable;
+  const isScreenNarrow = width < 1024;
+  const isTabletSize = touchCapable && (width <= 1366 && height <= 1024);
+
+  return touchCapable && (matchesUA || isSmartDisplay || isIpadWithTouch || isScreenNarrow || isTabletSize);
+}
 
 function App() {
-  const [view, setView] = useState('home');
+  const isMobile = useIsMobile();
+
+
   const [selectedVideoId, setSelectedVideoId] = useState(null);
+  const [videoSummaryData, setVideoSummaryData] = useState(null);
   const [channel, setChannel] = useState(null);
+  const [channelList, setChannelList] = useState([]);
+  const [recentVideos, setRecentVideos] = useState([]);
 
   const containerRef = useRef(null);
   const resizerRef = useRef(null);
   const isResizing = useRef(false);
-  const channelScrollRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // ✅ Persistent Sidebar State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebarCollapsed') === 'true';
   });
-
-  // ✅ Persistent Video Summary Width
   const [videoSummaryWidth, setVideoSummaryWidth] = useState(() => {
     const saved = localStorage.getItem('videoSummaryWidth');
     return saved ? parseInt(saved, 10) : 400;
   });
 
-  // ✅ Drag indicator state
-  const [isDragging, setIsDragging] = useState(false);
+  useEffect(() => {
+    async function fetchChannelList() {
+      try {
+        const res = await fetch('https://digestjutsu.com/GetPostAllChannel?method=get');
+        const parsed = await res.json();
+        setChannelList(parsed);
+      } catch (err) {
+        console.error('Failed to fetch channel list:', err);
+      }
+    }
+
+    async function fetchRecentVideos() {
+      try {
+        const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
+        const parsed = await res.json();
+        setRecentVideos(parsed);
+      } catch (err) {
+        console.error('Failed to fetch recent videos:', err);
+      }
+    }
+
+    fetchChannelList();
+    fetchRecentVideos();
+  }, []);
+
+  const handleVideoSelect = async (videoId) => {
+    setSelectedVideoId(videoId);
+    try {
+      const res = await fetch(
+        `https://digestjutsu.com/youtubeStockResearchReadS3SingleVideo?video_id=${videoId}`
+      );
+      const parsed = await res.json();
+      setVideoSummaryData(parsed);
+    } catch (err) {
+      console.error('Failed to fetch video summary:', err);
+      setVideoSummaryData(null);
+    }
+  };
+
+  function toggleSidebar() {
+    setSidebarCollapsed((prev) => {
+      localStorage.setItem('sidebarCollapsed', !prev);
+      return !prev;
+    });
+  }
+
+  function startResizing() {
+    isResizing.current = true;
+    setIsDragging(true);
+  }
 
   useEffect(() => {
     function handleMouseMove(e) {
       if (!isResizing.current) return;
-      const containerRight = containerRef.current.getBoundingClientRect().right;
+      const containerRight = containerRef.current?.getBoundingClientRect().right || window.innerWidth;
       const newWidth = containerRight - e.clientX;
-
-      if (newWidth > 300 && newWidth < 1000) {
+      const maxAllowed = Math.max(3000, window.innerWidth - 300); // or any big number
+      if (newWidth > 300 && newWidth < maxAllowed) {
         setVideoSummaryWidth(newWidth);
         localStorage.setItem('videoSummaryWidth', newWidth);
       }
@@ -46,102 +143,45 @@ function App() {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
-  function startResizing() {
-    isResizing.current = true;
-    setIsDragging(true);
-  }
-
-  function toggleSidebar() {
-    setSidebarCollapsed((prev) => {
-      localStorage.setItem('sidebarCollapsed', !prev);
-      return !prev;
-    });
+  if (isMobile) {
+    return (
+      <div className="safe-swipe-wrapper">
+        <MobileLayout
+          onVideoSelect={handleVideoSelect}
+          selectedVideoId={selectedVideoId}
+          videoSummaryData={videoSummaryData}
+          channel={channel}
+          setChannel={setChannel}
+          channelList={channelList}
+          recentVideos={recentVideos}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="container-fluid" ref={containerRef}>
-      <div className="d-flex" style={{ minHeight: '100vh' }}>
-        {/* Sidebar */}
-        <nav
-          className="p-3 text-white sidebar bg-dark d-flex flex-column"
-          style={{
-            minHeight: '100vh',
-            width: sidebarCollapsed ? '60px' : '180px',
-            transition: 'width 0.3s ease',
-            overflow: 'hidden',
-          }}
-        >
-          <Sidebar
-            onSelectView={setView}
-            collapsed={sidebarCollapsed}
-            toggleCollapse={toggleSidebar}
-          />
-        </nav>
-
-        {/* Main Content */}
-        <main
-          className="p-3 flex-grow-1"
-          style={{ minWidth: 0, overflow: 'auto' }}
-        >
-          <MainContent
-            view={view}
-            setView={setView}
-            setSelectedVideoId={setSelectedVideoId}
-            setChannel={(channelId) => {
-              setChannel(channelId);
-              setView('channelVideos');
-            }}
-            selectedChannel={channel}
-            channelScrollRef={channelScrollRef}
-          />
-        </main>
-
-        {/* Resizer */}
-        <div
-          ref={resizerRef}
-          onMouseDown={startResizing}
-          style={{
-            width: '6px',
-            cursor: 'col-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'transparent',
-            userSelect: 'none',
-          }}
-        >
-          <div
-            style={{
-              width: '2px',
-              height: '90%',
-              borderRadius: '1px',
-              backgroundColor: isDragging ? '#666' : '#bbb',
-              opacity: isDragging ? 1 : 0.3,
-              transition: 'opacity 0.2s ease, background-color 0.2s ease',
-            }}
-          />
-        </div>
-
-        {/* Video Summary */}
-        <aside
-          className="p-4 bg-light"
-          style={{
-            width: `${videoSummaryWidth}px`,
-            minWidth: '300px',
-            maxWidth: '1000px',
-          }}
-        >
-          <VideoSummary videoId={selectedVideoId} />
-        </aside>
-      </div>
-    </div>
+    <DesktopLayout
+      onVideoSelect={handleVideoSelect}
+      selectedVideoId={selectedVideoId}
+      videoSummaryData={videoSummaryData}
+      channel={channel}
+      setChannel={setChannel}
+      channelList={channelList}
+      recentVideos={recentVideos}
+      sidebarCollapsed={sidebarCollapsed}
+      toggleSidebar={toggleSidebar}
+      containerRef={containerRef}
+      resizerRef={resizerRef}
+      videoSummaryWidth={videoSummaryWidth}
+      isDragging={isDragging}
+      startResizing={startResizing}
+    />
   );
 }
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import ChannelProfilePicture from '../components/ChannelProfilePicture';
-import ChannelPopover from './ChannelPopover';
+import ChannelProfilePicture from '../../components/ChannelProfilePicture';
+import ChannelPopover from './MChannelPopover';
 
 function formatSubs(count) {
   if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
@@ -8,9 +8,10 @@ function formatSubs(count) {
   return count.toString();
 }
 
-function ChannelList({
+function MChannelList({
   channels = [],
   onSelectChannel,
+  selectedChannelId,
   viewState = {},
   updateViewState = () => {},
 }) {
@@ -22,14 +23,20 @@ function ChannelList({
 
   const [sortBy, setSortBy] = useState(viewState.sortBy ?? 'subscriber_count');
   const [query, setQuery] = useState(viewState.query ?? '');
+  const [clickedChannel, setClickedChannel] = useState(viewState.clickedChannel ?? selectedChannelId ?? null);
 
-  const clickedChannel = viewState.clickedChannel ?? null;
   const isMobile = window.innerWidth < 768;
   const hoverTimeout = useRef(null);
 
   useEffect(() => {
-    updateViewState({ sortBy, query });
-  }, [sortBy, query]);
+    updateViewState({ sortBy, query, clickedChannel });
+  }, [sortBy, query, clickedChannel]);
+
+  useEffect(() => {
+    if (selectedChannelId && selectedChannelId !== clickedChannel) {
+      setClickedChannel(selectedChannelId);
+    }
+  }, [selectedChannelId]);
 
   const sortedChannels = [...channels]
     .filter((ch) => {
@@ -90,11 +97,8 @@ function ChannelList({
             key={channel.channel_tag}
             ref={ref}
             onClick={() => {
-              updateViewState({
-                clickedChannel: channel.channel_tag,
-                channelTag: channel.channel_tag,
-              });
-              onSelectChannel?.(channel.channel_tag); // optional, will do nothing if not passed
+              setClickedChannel(channel.channel_tag);
+              onSelectChannel(channel.channel_tag);
             }}
             className="d-flex align-items-center gap-3 p-2 mb-2 rounded border"
             style={{
@@ -192,4 +196,4 @@ function ChannelList({
   );
 }
 
-export default ChannelList;
+export default MChannelList;
