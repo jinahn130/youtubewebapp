@@ -86,7 +86,23 @@ function RecentVideos({
         const channel = channelMap[video.channel_tag];
         const displayTag = video.channel_tag.replace(/^@+/, '@');
         const subCount = formatSubs(channel?.subscriber_count);
-        const dateString = formatDistanceToNow(new Date(video.published_at), { addSuffix: true });
+        // FIXED DATE: Calculate time relative to September 9, 2025 instead of current date
+        const fixedCurrentDate = new Date('2025-09-09T23:59:59.999Z');
+        const publishedDate = new Date(video.published_at);
+        const diffInMs = fixedCurrentDate - publishedDate;
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+        let dateString;
+        if (diffInDays === 0) {
+          dateString = 'today';
+        } else if (diffInDays === 1) {
+          dateString = '1 day ago';
+        } else if (diffInDays < 30) {
+          dateString = `${diffInDays} days ago`;
+        } else {
+          const diffInMonths = Math.floor(diffInDays / 30);
+          dateString = diffInMonths === 1 ? '1 month ago' : `${diffInMonths} months ago`;
+        }
         const isSelected = selectedVideoId === video.video_id;
 
         return (

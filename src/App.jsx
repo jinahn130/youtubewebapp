@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
 import VideoSummary from './components/VideoSummary';
+import SitePauseNotice from './components/SitePauseNotice';
 import './App.css';
 
 function useIsMobile() {
@@ -59,11 +60,18 @@ function App() {
   const [channel, setChannel] = useState(null);
   const [channelList, setChannelList] = useState([]);
   const [recentVideos, setRecentVideos] = useState([]);
+  const [recentVideosPage, setRecentVideosPage] = useState(1);
+  const [hasMoreRecentVideos, setHasMoreRecentVideos] = useState(true);
 
   const containerRef = useRef(null);
   const resizerRef = useRef(null);
   const isResizing = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Site pause notice state
+  const [showPauseNotice, setShowPauseNotice] = useState(() => {
+    return localStorage.getItem('sitePauseNoticeSeen') !== 'true';
+  });
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('sidebarCollapsed') === 'true';
@@ -86,9 +94,21 @@ function App() {
 
     async function fetchRecentVideos() {
       try {
-        const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
+        // COMMENTED OUT: Dynamic 30-day recent videos for production pause
+        // const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
+
+        // Get all recent videos but filter client-side to fixed date
+        const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=60');
         const parsed = await res.json();
-        setRecentVideos(parsed);
+
+        // FILTER: Only show videos published on or before September 9, 2025
+        const cutoffDate = new Date('2025-09-09T23:59:59.999Z');
+        const filteredVideos = parsed.filter(video => {
+          const publishedDate = new Date(video.published_at);
+          return publishedDate <= cutoffDate;
+        });
+
+        setRecentVideos(filteredVideos);
       } catch (err) {
         console.error('Failed to fetch recent videos:', err);
       }
@@ -118,6 +138,11 @@ function App() {
       return !prev;
     });
   }
+
+  const handleClosePauseNotice = () => {
+    localStorage.setItem('sitePauseNoticeSeen', 'true');
+    setShowPauseNotice(false);
+  };
 
   function startResizing() {
     isResizing.current = true;
@@ -151,37 +176,49 @@ function App() {
 
   if (isMobile) {
     return (
-      <div className="safe-swipe-wrapper">
-        <MobileLayout
-          onVideoSelect={handleVideoSelect}
-          selectedVideoId={selectedVideoId}
-          videoSummaryData={videoSummaryData}
-          channel={channel}
-          setChannel={setChannel}
-          channelList={channelList}
-          recentVideos={recentVideos}
+      <>
+        <div className="safe-swipe-wrapper">
+          <MobileLayout
+            onVideoSelect={handleVideoSelect}
+            selectedVideoId={selectedVideoId}
+            videoSummaryData={videoSummaryData}
+            channel={channel}
+            setChannel={setChannel}
+            channelList={channelList}
+            recentVideos={recentVideos}
+          />
+        </div>
+        <SitePauseNotice
+          isOpen={showPauseNotice}
+          onClose={handleClosePauseNotice}
         />
-      </div>
+      </>
     );
   }
 
   return (
-    <DesktopLayout
-      onVideoSelect={handleVideoSelect}
-      selectedVideoId={selectedVideoId}
-      videoSummaryData={videoSummaryData}
-      channel={channel}
-      setChannel={setChannel}
-      channelList={channelList}
-      recentVideos={recentVideos}
-      sidebarCollapsed={sidebarCollapsed}
-      toggleSidebar={toggleSidebar}
-      containerRef={containerRef}
-      resizerRef={resizerRef}
-      videoSummaryWidth={videoSummaryWidth}
-      isDragging={isDragging}
-      startResizing={startResizing}
-    />
+    <>
+      <DesktopLayout
+        onVideoSelect={handleVideoSelect}
+        selectedVideoId={selectedVideoId}
+        videoSummaryData={videoSummaryData}
+        channel={channel}
+        setChannel={setChannel}
+        channelList={channelList}
+        recentVideos={recentVideos}
+        sidebarCollapsed={sidebarCollapsed}
+        toggleSidebar={toggleSidebar}
+        containerRef={containerRef}
+        resizerRef={resizerRef}
+        videoSummaryWidth={videoSummaryWidth}
+        isDragging={isDragging}
+        startResizing={startResizing}
+      />
+      <SitePauseNotice
+        isOpen={showPauseNotice}
+        onClose={handleClosePauseNotice}
+      />
+    </>
   );
 }
 

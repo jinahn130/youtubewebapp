@@ -4,36 +4,58 @@ import MarketInsights from '../components/MMarketInsights';
 
 const formatDate = (date) => date.toISOString().slice(0, 10);
 
-const getLast30WeekdaysUpToCutoff = () => {
+// COMMENTED OUT: Dynamic 30-day date generation for production pause
+// const getLast30WeekdaysUpToCutoff = () => {
+//   const dates = [];
+//   const now = new Date();
+
+//   // 12:45 PM UTC cutoff (7:45 AM EST)
+//   const currentUTC = now.getUTCHours() + now.getUTCMinutes() / 60;
+//   const isPastCutoff = currentUTC >= 12.75;
+
+//   let day = new Date(now);
+
+//   // Only include today if it's a weekday and we're past the cutoff
+//   const isWeekday = day.getUTCDay() >= 1 && day.getUTCDay() <= 5;
+//   if (!(isWeekday && isPastCutoff)) {
+//     day.setUTCDate(day.getUTCDate() - 1); // fallback to yesterday
+//   }
+
+//   // Collect 31 past weekdays
+//   while (dates.length < 31) {
+//     const dow = day.getUTCDay();
+//     if (dow !== 0 && dow !== 6) {
+//       dates.push(formatDate(new Date(day))); // clone for safety
+//     }
+//     day.setUTCDate(day.getUTCDate() - 1);
+//   }
+
+//   return dates;
+// };
+
+// FIXED DATE RANGE: June 1, 2025 to September 9, 2025 (weekdays only)
+const getFixedDateRange = () => {
   const dates = [];
-  const now = new Date();
+  const startDate = new Date('2025-06-01');
+  const endDate = new Date('2025-09-09');
 
-  // 12:45 PM UTC cutoff (7:45 AM EST)
-  const currentUTC = now.getUTCHours() + now.getUTCMinutes() / 60;
-  const isPastCutoff = currentUTC >= 12.75;
+  let currentDate = new Date(startDate);
 
-  let day = new Date(now);
-
-  // Only include today if it's a weekday and we're past the cutoff
-  const isWeekday = day.getUTCDay() >= 1 && day.getUTCDay() <= 5;
-  if (!(isWeekday && isPastCutoff)) {
-    day.setUTCDate(day.getUTCDate() - 1); // fallback to yesterday
-  }
-
-  // Collect 31 past weekdays
-  while (dates.length < 31) {
-    const dow = day.getUTCDay();
-    if (dow !== 0 && dow !== 6) {
-      dates.push(formatDate(new Date(day))); // clone for safety
+  while (currentDate <= endDate) {
+    const dow = currentDate.getUTCDay();
+    // Only include weekdays (Monday = 1, Friday = 5)
+    if (dow >= 1 && dow <= 5) {
+      dates.push(formatDate(new Date(currentDate)));
     }
-    day.setUTCDate(day.getUTCDate() - 1);
+    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
   }
 
-  return dates;
+  // Return dates in reverse order (most recent first)
+  return dates.reverse();
 };
 
 function ExtractView({ onVideoClick, viewState = {}, updateViewState = () => {} }) {
-  const dates = getLast30WeekdaysUpToCutoff();
+  const dates = getFixedDateRange();
   const [selectedDate, setSelectedDate] = useState(viewState.selectedDate || dates[0]);
   const [dailyExtract, setDailyExtract] = useState(null);
   const [loading, setLoading] = useState(false);
