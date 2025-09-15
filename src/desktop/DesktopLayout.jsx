@@ -12,6 +12,10 @@ function DesktopLayout({
   setChannel,
   channelList,
   recentVideos,
+  recentVideosPage,
+  hasMoreRecentVideos,
+  onPreviousPage,
+  onNextPage,
   sidebarCollapsed,
   toggleSidebar,
   containerRef,
@@ -175,6 +179,10 @@ function DesktopLayout({
                 selectedChannel={channel}
                 channelList={channelList}
                 recentVideos={recentVideos}
+                recentVideosPage={recentVideosPage}
+                hasMoreRecentVideos={hasMoreRecentVideos}
+                onPreviousPage={onPreviousPage}
+                onNextPage={onNextPage}
                 scrollRefs={scrollRefs}
                 scrollStack={scrollStack}
                 updateViewScroll={updateViewScroll}

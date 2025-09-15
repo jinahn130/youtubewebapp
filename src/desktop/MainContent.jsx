@@ -14,6 +14,10 @@ function MainContent({
   selectedChannel,
   channelList,
   recentVideos,
+  recentVideosPage,
+  hasMoreRecentVideos,
+  onPreviousPage,
+  onNextPage,
   scrollRefs,
   scrollStack,
   updateViewScroll,
@@ -53,6 +57,10 @@ function MainContent({
           selectedVideoId={selectedVideoId}
           viewState={viewState}
           updateViewState={updateViewState}
+          recentVideosPage={recentVideosPage}
+          hasMoreRecentVideos={hasMoreRecentVideos}
+          onPreviousPage={onPreviousPage}
+          onNextPage={onNextPage}
         />
       );
       break;

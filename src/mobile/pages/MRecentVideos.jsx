@@ -15,6 +15,10 @@ function MRecentVideos({
   selectedVideoId,
   viewState = {},
   updateViewState = () => {},
+  recentVideosPage = 1,
+  hasMoreRecentVideos = true,
+  onPreviousPage = () => {},
+  onNextPage = () => {},
 }) {
   const [searchQuery, setSearchQuery] = useState(viewState.searchQuery || '');
   const [searchMode, setSearchMode] = useState(viewState.searchMode || 'title');
@@ -72,6 +76,44 @@ function MRecentVideos({
             {sortBy === 'published_at' ? 'Date ▼' : 'Subscriber Count ▼'}
           </div>
         </div>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="d-flex justify-content-center align-items-center mb-3">
+        <button
+          className="btn btn-outline-secondary btn-sm"
+          onClick={onPreviousPage}
+          disabled={recentVideosPage <= 1}
+          style={{
+            padding: '0.25rem 0.75rem',
+            fontSize: '0.875rem',
+            borderRadius: '6px',
+          }}
+        >
+          ← Previous
+        </button>
+        <span
+          className="mx-3"
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: '#6c757d',
+          }}
+        >
+          Page {recentVideosPage}
+        </span>
+        <button
+          className="btn btn-outline-secondary btn-sm"
+          onClick={onNextPage}
+          disabled={!hasMoreRecentVideos}
+          style={{
+            padding: '0.25rem 0.75rem',
+            fontSize: '0.875rem',
+            borderRadius: '6px',
+          }}
+        >
+          Next →
+        </button>
       </div>
 
       <input

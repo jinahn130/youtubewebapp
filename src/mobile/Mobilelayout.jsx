@@ -16,6 +16,10 @@ function MobileLayout({
   videoSummaryData,
   channelList,
   recentVideos,
+  recentVideosPage,
+  hasMoreRecentVideos,
+  onPreviousPage,
+  onNextPage,
 }) {
   const [viewStack, setViewStack] = useState([{ key: 'recent', state: {} }]);
   const [poppedStack, setPoppedStack] = useState([]);
@@ -108,6 +112,10 @@ function MobileLayout({
             channelList={channelList}
             preloadedVideos={recentVideos}
             selectedVideoId={selectedVideoId}
+            recentVideosPage={recentVideosPage}
+            hasMoreRecentVideos={hasMoreRecentVideos}
+            onPreviousPage={onPreviousPage}
+            onNextPage={onNextPage}
           />
         );
         break;

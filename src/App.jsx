@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import DesktopLayout from './desktop/DesktopLayout';
 import MobileLayout from './mobile/MobileLayout';
 import VideoSummary from './components/VideoSummary';
@@ -81,6 +81,57 @@ function App() {
     return saved ? parseInt(saved, 10) : 400;
   });
 
+  // Define fetchRecentVideos outside useEffect so it can be used by multiple effects
+  const fetchRecentVideos = useCallback(async (page = 1) => {
+    try {
+      // COMMENTED OUT: Dynamic 30-day recent videos for production pause
+      // const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
+
+      // Calculate date range for pagination
+      // Page 1: Sept 9 - Aug 11, 2025 (30 days)
+      // Page 2: Aug 10 - July 12, 2025 (30 days)
+      // etc.
+      const baseDate = new Date('2025-09-09T23:59:59.999Z');
+      const startDaysOffset = (page - 1) * 30;
+      const endDaysOffset = page * 30;
+
+      const endDate = new Date(baseDate);
+      endDate.setDate(endDate.getDate() - startDaysOffset);
+
+      const startDate = new Date(baseDate);
+      startDate.setDate(startDate.getDate() - endDaysOffset);
+
+      // Fetch enough days to get historical data (increase as needed)
+      const totalDaysToFetch = Math.max(120, page * 35); // Fetch more days for later pages
+      const res = await fetch(`https://digestjutsu.com/GetRecentVideosMetadata?days=${totalDaysToFetch}`);
+      const parsed = await res.json();
+
+      // FILTER: Only show videos in the current page's date range
+      const filteredVideos = parsed.filter(video => {
+        const publishedDate = new Date(video.published_at);
+        return publishedDate >= startDate && publishedDate <= endDate;
+      });
+
+      setRecentVideos(filteredVideos);
+
+      // Check if there are more videos for the next page
+      const nextPageStartDate = new Date(baseDate);
+      nextPageStartDate.setDate(nextPageStartDate.getDate() - (page * 30));
+      const nextPageEndDate = new Date(baseDate);
+      nextPageEndDate.setDate(nextPageEndDate.getDate() - ((page + 1) * 30));
+
+      const hasNextPageVideos = parsed.some(video => {
+        const publishedDate = new Date(video.published_at);
+        return publishedDate >= nextPageEndDate && publishedDate <= nextPageStartDate;
+      });
+
+      setHasMoreRecentVideos(hasNextPageVideos);
+    } catch (err) {
+      console.error('Failed to fetch recent videos:', err);
+      setHasMoreRecentVideos(false);
+    }
+  }, []);
+
   useEffect(() => {
     async function fetchChannelList() {
       try {
@@ -92,31 +143,14 @@ function App() {
       }
     }
 
-    async function fetchRecentVideos() {
-      try {
-        // COMMENTED OUT: Dynamic 30-day recent videos for production pause
-        // const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=30');
-
-        // Get all recent videos but filter client-side to fixed date
-        const res = await fetch('https://digestjutsu.com/GetRecentVideosMetadata?days=60');
-        const parsed = await res.json();
-
-        // FILTER: Only show videos published on or before September 9, 2025
-        const cutoffDate = new Date('2025-09-09T23:59:59.999Z');
-        const filteredVideos = parsed.filter(video => {
-          const publishedDate = new Date(video.published_at);
-          return publishedDate <= cutoffDate;
-        });
-
-        setRecentVideos(filteredVideos);
-      } catch (err) {
-        console.error('Failed to fetch recent videos:', err);
-      }
-    }
-
     fetchChannelList();
     fetchRecentVideos();
   }, []);
+
+  // Fetch videos when page changes
+  useEffect(() => {
+    fetchRecentVideos(recentVideosPage);
+  }, [recentVideosPage]);
 
   const handleVideoSelect = async (videoId) => {
     setSelectedVideoId(videoId);
@@ -142,6 +176,18 @@ function App() {
   const handleClosePauseNotice = () => {
     localStorage.setItem('sitePauseNoticeSeen', 'true');
     setShowPauseNotice(false);
+  };
+
+  const handlePreviousPage = () => {
+    if (recentVideosPage > 1) {
+      setRecentVideosPage(prev => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMoreRecentVideos) {
+      setRecentVideosPage(prev => prev + 1);
+    }
   };
 
   function startResizing() {
@@ -186,6 +232,10 @@ function App() {
             setChannel={setChannel}
             channelList={channelList}
             recentVideos={recentVideos}
+            recentVideosPage={recentVideosPage}
+            hasMoreRecentVideos={hasMoreRecentVideos}
+            onPreviousPage={handlePreviousPage}
+            onNextPage={handleNextPage}
           />
         </div>
         <SitePauseNotice
@@ -206,6 +256,10 @@ function App() {
         setChannel={setChannel}
         channelList={channelList}
         recentVideos={recentVideos}
+        recentVideosPage={recentVideosPage}
+        hasMoreRecentVideos={hasMoreRecentVideos}
+        onPreviousPage={handlePreviousPage}
+        onNextPage={handleNextPage}
         sidebarCollapsed={sidebarCollapsed}
         toggleSidebar={toggleSidebar}
         containerRef={containerRef}
